@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendas - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Vendas</h2>
+        <p class="text-muted">Registro de faturamento, comissões de vendedores e baixas de estoque.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('vendas.nova') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Registrar Venda</a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card p-3 mb-4">
+    <form method="GET" action="{{ url_for('vendas.index') }}" class="row g-2">
+        <div class="col-md-4">
+            <input type="text" class="form-control" name="q" placeholder="Pesquisar por cliente..." value="{{ busca }}">
+        </div>
+        <div class="col-md-3">
+            <input type="date" class="form-control" name="data_ini" value="{{ data_ini }}" placeholder="Data Inicial">
+        </div>
+        <div class="col-md-3">
+            <input type="date" class="form-control" name="data_fim" value="{{ data_fim }}" placeholder="Data Final">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Nº</th>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Vendedor</th>
+                    <th>Qtd (Sacos)</th>
+                    <th>Preço Unit.</th>
+                    <th>Total Líquido</th>
+                    <th>Forma Pag.</th>
+                    <th>Status Pag.</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in vendas.items %}
+                <tr>
+                    <td><code>#{{ v.id }}</code></td>
+                    <td>{{ v.data.strftime('%d/%m/%Y') }}</td>
+                    <td><strong>{{ v.cliente.nome }}</strong></td>
+                    <td>{{ v.vendedor.nome if v.vendedor else 'Venda Direta' }}</td>
+                    <td>{{ v.quantidade_sacos }} sacos</td>
+                    <td>R$ {{ v.preco_unitario|round(2) }}</td>
+                    <td class="font-weight-bold text-success">R$ {{ v.valor_liquido|round(2) }}</td>
+                    <td><span class="badge bg-secondary-subtle text-secondary">{{ v.forma_pagamento }}</span></td>
+                    <td>
+                        {% if v.status_pagamento == 'pago' %}
+                        <span class="badge bg-success">Pago</span>
+                        {% elif v.status_pagamento == 'parcial' %}
+                        <span class="badge bg-warning text-dark">Parcial (Devendo)</span>
+                        {% else %}
+                        <span class="badge bg-danger">Devendo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('vendas.detalhe', id=v.id) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye-fill"></i></a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted">Nenhuma venda registrada no período.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    {% if vendas.pages > 1 %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% for page in vendas.iter_pages() %}
+                {% if page %}
+                    <li class="page-item {% if page == vendas.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('vendas.index', page=page, q=busca, data_ini=data_ini, data_fim=data_fim) }}">{{ page }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

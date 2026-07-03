@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h4 class="font-weight-bold mb-4"><i class="bi bi-pencil-square me-2 text-primary"></i>{{ titulo }}</h4>
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label text-muted small">Nome da Matéria-Prima</label>
+                    <input type="text" class="form-control" value="{{ mp.nome }}" readonly disabled>
+                </div>
+
+                <div class="mb-3">
+                    <label for="fornecedor_id" class="form-label text-muted small">Fornecedor Padrão</label>
+                    <select class="form-select" id="fornecedor_id" name="fornecedor_id">
+                        <option value="">Nenhum</option>
+                        {% for f in fornecedores %}
+                        <option value="{{ f.id }}" {% if mp.fornecedor_id == f.id %}selected{% endif %}>{{ f.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="preco_saco" class="form-label text-muted small">Preço por Saco (R$)</label>
+                        <input type="number" step="0.0001" class="form-control" id="preco_saco" name="preco_saco" value="{{ mp.preco_saco }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="frete_saco" class="form-label text-muted small">Frete Unitário (R$)</label>
+                        <input type="number" step="0.0001" class="form-control" id="frete_saco" name="frete_saco" value="{{ mp.frete_saco }}">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="estoque_minimo" class="form-label text-muted small">Estoque Mínimo (Alerta)</label>
+                        <input type="number" step="0.01" class="form-control" id="estoque_minimo" name="estoque_minimo" value="{{ mp.estoque_minimo }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Consumo por Saco de Produto</label>
+                        <input type="text" class="form-control" value="{{ mp.quantidade_uso_kg }} {% if mp.tipo in ('embalagem', 'adesivo') %}un{% else %}kg{% endif %}" readonly disabled>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="observacoes" class="form-label text-muted small">Observações</label>
+                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{{ mp.observacoes or '' }}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('materias_primas.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

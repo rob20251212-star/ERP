@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório Financeiro - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Relatório Financeiro</h2>
+        <p class="text-muted">Extrato geral de fluxo de caixa e demonstrativo de resultados.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card p-3 mb-4 d-print-none">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Mês</label>
+            <select class="form-select" name="mes">
+                <option value="">Todos</option>
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m|string == mes %}selected{% endif %}>{{ ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][m-1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Ano</label>
+            <select class="form-select" name="ano">
+                {% for a in range(2023, 2029) %}
+                <option value="{{ a }}" {% if a|string == ano %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small text-muted">Data Inicial</label>
+            <input type="date" class="form-control" name="data_ini" value="{{ data_ini }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small text-muted">Data Final</label>
+            <input type="date" class="form-control" name="data_fim" value="{{ data_fim }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<!-- Resultados Consolidados -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 bg-success-subtle text-success-emphasis border-success">
+            <span class="text-muted small">Total Receitas (Entradas)</span>
+            <h3 class="font-weight-bold mt-1 mb-0">R$ {{ receitas|round(2) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 bg-danger-subtle text-danger-emphasis border-danger">
+            <span class="text-muted small">Total Despesas (Saídas)</span>
+            <h3 class="font-weight-bold mt-1 mb-0">R$ {{ despesas|round(2) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 bg-primary-subtle text-primary-emphasis border-primary">
+            <span class="text-muted small">Saldo Líquido</span>
+            <h3 class="font-weight-bold mt-1 mb-0">R$ {{ (receitas - despesas)|round(2) }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3">
+    <h5 class="font-weight-bold mb-3"><i class="bi bi-receipt me-2"></i>Extrato de Transações Localizadas</h5>
+    <div class="table-responsive">
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Categoria</th>
+                    <th>Descrição</th>
+                    <th class="text-end">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lancamentos %}
+                <tr>
+                    <td>{{ l.data.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        {% if l.tipo == 'receita' %}
+                        <span class="badge bg-success">Receita</span>
+                        {% else %}
+                        <span class="badge bg-danger">Despesa</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-secondary-subtle text-secondary">{{ l.categoria|capitalize }}</span></td>
+                    <td>{{ l.descricao }}</td>
+                    <td class="text-end font-weight-bold {% if l.tipo == 'receita' %}text-success{% else %}text-danger{% endif %}">
+                        {% if l.tipo == 'receita' %}+{% else %}-{% endif %} R$ {{ l.valor|round(2) }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">Nenhum lançamento localizado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

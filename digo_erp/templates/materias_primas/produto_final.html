@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Produto Final - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Produto Final: {{ produto.nome }}</h2>
+        <p class="text-muted">Ficha técnica, custos de fabricação e margens.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('materias_primas.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Voltar</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Ficha Técnica / Config de Margem -->
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-sliders me-2"></i>Parâmetros de Precificação</h5>
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label text-muted small">Custo Atual de Fabricação</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-secondary-subtle">R$</span>
+                        <input type="text" class="form-control font-weight-bold" value="{{ produto.custo_calculado|round(2) }}" readonly disabled>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="margem_lucro_pct" class="form-label text-muted small">Margem de Lucro Alvo (%)</label>
+                        <input type="number" step="0.1" class="form-control" id="margem_lucro_pct" name="margem_lucro_pct" value="{{ produto.margem_lucro_pct }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="estoque_minimo" class="form-label text-muted small">Estoque Mínimo (Alerta)</label>
+                        <input type="number" step="1" class="form-control" id="estoque_minimo" name="estoque_minimo" value="{{ produto.estoque_minimo }}" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-muted small">Preço Sugerido com Margem</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-success-subtle text-success">R$</span>
+                        <input type="text" class="form-control text-success font-weight-bold" value="{{ produto.preco_venda_padrao|round(2) }}" readonly disabled>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Atualizar Parâmetros</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Composição Analítica -->
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-diagram-3 me-2"></i>Composição do Saco (25 kg)</h5>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Insumo</th>
+                            <th>Qtd Necessária</th>
+                            <th>Proporção Custo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in breakdown.breakdown %}
+                        <tr>
+                            <td><strong>{{ item.nome }}</strong></td>
+                            <td>{{ item.qtd_uso }} {% if item.tipo in ('embalagem', 'adesivo') %}un{% else %}kg{% endif %}</td>
+                            <td>R$ {{ item.custo_proporcional|round(2) }} ({{ ((item.custo_proporcional / breakdown.custo_total) * 100)|round(1) if breakdown.custo_total else 0 }}%)</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

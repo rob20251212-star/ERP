@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Nova Produção - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h4 class="font-weight-bold mb-4"><i class="bi bi-hammer me-2 text-primary"></i>Registrar Nova Produção</h4>
+            
+            <form method="POST" id="producaoForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="data" class="form-label text-muted small">Data da Fabricação *</label>
+                        <input type="date" class="form-control" id="data" name="data" value="{{ hoje }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="lote" class="form-label text-muted small">Identificação do Lote</label>
+                        <input type="text" class="form-control" id="lote" name="lote" placeholder="Deixe em branco para gerar automático">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="quantidade_sacos" class="form-label text-muted small">Quantidade a Produzir (Sacos) *</label>
+                        <input type="number" class="form-control" id="quantidade_sacos" name="quantidade_sacos" min="1" required placeholder="Ex: 100">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="responsavel" class="form-label text-muted small">Responsável pela Produção</label>
+                        <input type="text" class="form-control" id="responsavel" name="responsavel" placeholder="Ex: João Silva">
+                    </div>
+                </div>
+
+                <!-- Painel Informativo de Consumo Estimado -->
+                <div class="card bg-secondary-subtle p-3 mb-4">
+                    <h6 class="font-weight-bold"><i class="bi bi-info-circle me-1"></i>Consumo Estimado de Matérias-Primas</h6>
+                    <p class="text-muted small mb-3">Fórmula automática: 1 saco de 25 kg = 12.5 kg Celulósico + 7.5 kg Celugel + 5 kg Fibra + 1 Embalagem + 1 Adesivo</p>
+                    
+                    <div class="row text-center">
+                        <div class="col-md-4 mb-2">
+                            <span class="d-block small text-muted">Celulósico (12.5 kg/saco)</span>
+                            <strong id="calc_celulosico" class="fs-5">0.0 kg</strong>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <span class="d-block small text-muted">Celugel (7.5 kg/saco)</span>
+                            <strong id="calc_celugel" class="fs-5">0.0 kg</strong>
+                        </div>
+                        <div class="col-md-4 mb-2">
+                            <span class="d-block small text-muted">Fibra (5.0 kg/saco)</span>
+                            <strong id="calc_fibra" class="fs-5">0.0 kg</strong>
+                        </div>
+                    </div>
+                    <div class="row text-center mt-2 border-top pt-2">
+                        <div class="col-md-6 mb-1">
+                            <span class="d-block small text-muted">Embalagens (1 un/saco)</span>
+                            <strong id="calc_embalagem" class="fs-5">0 un</strong>
+                        </div>
+                        <div class="col-md-6 mb-1">
+                            <span class="d-block small text-muted">Adesivos (1 un/saco)</span>
+                            <strong id="calc_adesivo" class="fs-5">0 un</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="observacoes" class="form-label text-muted small">Observações / Notas</label>
+                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('producao.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Iniciar Produção</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const qtyInput = document.getElementById("quantidade_sacos");
+    
+    const calcCelo = document.getElementById("calc_celulosico");
+    const calcCelu = document.getElementById("calc_celugel");
+    const calcFibra = document.getElementById("calc_fibra");
+    const calcEmb = document.getElementById("calc_embalagem");
+    const calcAde = document.getElementById("calc_adesivo");
+
+    function updateConsumption() {
+        const qty = parseInt(qtyInput.value) || 0;
+        
+        calcCelo.innerText = (qty * 12.5).toFixed(1) + " kg";
+        calcCelu.innerText = (qty * 7.5).toFixed(1) + " kg";
+        calcFibra.innerText = (qty * 5.0).toFixed(1) + " kg";
+        calcEmb.innerText = qty + " un";
+        calcAde.innerText = qty + " un";
+    }
+
+    qtyInput.addEventListener("input", updateConsumption);
+});
+</script>
+{% endblock %}

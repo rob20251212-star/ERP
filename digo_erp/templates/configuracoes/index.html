@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Configurações - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="font-weight-bold">Configurações Gerais do Sistema</h2>
+        <p class="text-muted">Parâmetros da empresa, margens padrão e cadastro de usuários.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Configurações Operacionais -->
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-sliders me-2"></i>Parâmetros da Empresa</h5>
+            
+            <form action="{{ url_for('configuracoes.salvar') }}" method="POST">
+                <div class="mb-3">
+                    <label for="empresa_nome" class="form-label text-muted small">Nome da Empresa</label>
+                    <input type="text" class="form-control" id="empresa_nome" name="empresa_nome" value="{{ configs.get('empresa_nome', '') }}">
+                </div>
+                <div class="mb-3">
+                    <label for="empresa_cnpj" class="form-label text-muted small">CNPJ</label>
+                    <input type="text" class="form-control" id="empresa_cnpj" name="empresa_cnpj" value="{{ configs.get('empresa_cnpj', '') }}">
+                </div>
+                <div class="mb-3">
+                    <label for="empresa_telefone" class="form-label text-muted small">Telefone</label>
+                    <input type="text" class="form-control" id="empresa_telefone" name="empresa_telefone" value="{{ configs.get('empresa_telefone', '') }}">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="margem_lucro_padrao" class="form-label text-muted small">Margem de Lucro Padrão (%)</label>
+                        <input type="number" step="0.1" class="form-control" id="margem_lucro_padrao" name="margem_lucro_padrao" value="{{ configs.get('margem_lucro_padrao', '15') }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="estoque_alerta_dias" class="form-label text-muted small">Dias Alerta de Estoque</label>
+                        <input type="number" class="form-control" id="estoque_alerta_dias" name="estoque_alerta_dias" value="{{ configs.get('estoque_alerta_dias', '7') }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mt-2">Salvar Parâmetros</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Gestão de Usuários -->
+    <div class="col-md-6">
+        <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="font-weight-bold m-0"><i class="bi bi-people-fill me-2"></i>Usuários do Sistema</h5>
+                <a href="{{ url_for('configuracoes.novo_usuario') }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg me-1"></i>Novo Usuário</a>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Perfil</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <td><strong>{{ u.nome }}</strong></td>
+                            <td>{{ u.email }}</td>
+                            <td>
+                                {% if u.perfil == 'admin' %}
+                                <span class="badge bg-danger">Administrador</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Funcionário</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if u.ativo %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Bloqueado</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('configuracoes.editar_usuario', id=u.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-fill"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastro de Usuário - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h4 class="font-weight-bold mb-4"><i class="bi bi-person-gear me-2 text-primary"></i>{% if usuario %}Editar Usuário{% else %}Cadastrar Novo Usuário{% endif %}</h4>
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="nome" class="form-label text-muted small">Nome Completo *</label>
+                    <input type="text" class="form-control" id="nome" name="nome" value="{{ usuario.nome if usuario else '' }}" required placeholder="Ex: Roberto Carlos">
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label text-muted small">E-mail de Login *</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ usuario.email if usuario else '' }}" required placeholder="email@digo.com">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="perfil" class="form-label text-muted small">Perfil de Acesso *</label>
+                        <select class="form-select" id="perfil" name="perfil" required>
+                            <option value="funcionario" {% if usuario and usuario.perfil == 'funcionario' %}selected{% endif %}>Funcionário (Padrão)</option>
+                            <option value="admin" {% if usuario and usuario.perfil == 'admin' %}selected{% endif %}>Administrador (Acesso Total)</option>
+                        </select>
+                    </div>
+                    {% if usuario %}
+                    <div class="col-md-6 mb-3 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="ativo" name="ativo" {% if usuario.ativo %}checked{% endif %}>
+                            <label class="form-check-label text-muted small" for="ativo">Usuário Ativo</label>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    {% if usuario %}
+                    <label for="nova_senha" class="form-label text-muted small">Alterar Senha (Opcional)</label>
+                    <input type="password" class="form-control" id="nova_senha" name="nova_senha" placeholder="Digite apenas se desejar alterar a atual">
+                    {% else %}
+                    <label for="senha" class="form-label text-muted small">Senha de Acesso *</label>
+                    <input type="password" class="form-control" id="senha" name="senha" required placeholder="Digite a senha inicial">
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('configuracoes.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar Usuário</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

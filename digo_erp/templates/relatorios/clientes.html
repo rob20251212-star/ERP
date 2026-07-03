@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Clientes - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Desempenho por Cliente</h2>
+        <p class="text-muted">Ranking de vendas consolidadas e status de inadimplência.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Ranking</th>
+                    <th>Cliente</th>
+                    <th>Cidade/UF</th>
+                    <th>Volume Comprado</th>
+                    <th>Total Faturado</th>
+                    <th>Saldo Devedor Pendente</th>
+                    <th>Última Compra</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in dados %}
+                <tr class="{% if d.devendo > 0 %}table-danger-subtle{% endif %}">
+                    <td>
+                        {% if loop.index == 1 %}
+                        <span class="badge bg-warning text-dark"><i class="bi bi-trophy-fill me-1"></i>Top Comprador</span>
+                        {% else %}
+                        <span class="text-muted">{{ loop.index }}º</span>
+                        {% endif %}
+                    </td>
+                    <td><strong><a href="{{ url_for('clientes.detalhe', id=d.cliente.id) }}">{{ d.cliente.nome }}</a></strong></td>
+                    <td>{{ d.cliente.cidade or 'N/A' }}{% if d.cliente.estado %}/{{ d.cliente.estado }}{% endif %}</td>
+                    <td>{{ d.qtd }} sacos</td>
+                    <td class="text-success font-weight-bold">R$ {{ d.total|round(2) }}</td>
+                    <td class="text-danger font-weight-bold">R$ {{ d.devendo|round(2) }}</td>
+                    <td>{{ d.ultima.strftime('%d/%m/%Y') if d.ultima else 'N/A' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Nenhum cliente com compras registradas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

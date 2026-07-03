@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}Financeiro - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Controle Financeiro</h2>
+        <p class="text-muted">Fluxo de caixa, lançamentos manuais, contas a pagar e contas a receber.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('financeiro.novo_lancamento') }}" class="btn btn-primary"><i class="bi bi-journal-plus me-2"></i>Novo Lançamento</a>
+    </div>
+</div>
+
+<!-- Filtros de Período -->
+<div class="card p-3 mb-4">
+    <form method="GET" action="{{ url_for('financeiro.index') }}" class="row g-2 align-items-center">
+        <div class="col-md-5">
+            <select class="form-select" name="mes">
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][m-1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-5">
+            <select class="form-select" name="ano">
+                {% for a in range(2023, 2029) %}
+                <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<!-- KPIs Financeiros -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-4 border-success bg-success-subtle text-success-emphasis">
+            <span class="text-muted small text-uppercase">Receitas do Período</span>
+            <h2 class="font-weight-bold mt-1 mb-0">R$ {{ resumo.receitas|round(2) }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 border-danger bg-danger-subtle text-danger-emphasis">
+            <span class="text-muted small text-uppercase">Despesas do Período</span>
+            <h2 class="font-weight-bold mt-1 mb-0">R$ {{ resumo.despesas|round(2) }}</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 border-primary bg-primary-subtle text-primary-emphasis">
+            <span class="text-muted small text-uppercase">Saldo Líquido</span>
+            <h2 class="font-weight-bold mt-1 mb-0">R$ {{ resumo.saldo|round(2) }}</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Abas para Contas / Lançamentos -->
+<div class="row g-4">
+    <!-- Contas a Pagar / Receber Pendentes -->
+    <div class="col-md-6">
+        <div class="card p-3 mb-4">
+            <h5 class="font-weight-bold mb-3 text-danger"><i class="bi bi-calendar-minus me-2"></i>Contas a Pagar (Pendentes)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Fornecedor/Descrição</th>
+                            <th>Vencimento</th>
+                            <th>Valor</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cp in contas_pagar %}
+                        <tr>
+                            <td><strong>{{ cp.fornecedor.nome if cp.fornecedor else cp.descricao }}</strong></td>
+                            <td>{{ cp.vencimento.strftime('%d/%m/%Y') }}</td>
+                            <td class="font-weight-bold text-danger">R$ {{ cp.valor|round(2) }}</td>
+                            <td>
+                                <form action="{{ url_for('financeiro.pagar_conta', id=cp.id) }}" method="POST" onsubmit="return confirm('Deseja marcar esta conta como paga?')">
+                                    <button type="submit" class="btn btn-sm btn-success py-0 px-2">Pagar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted small">Nenhuma conta a pagar pendente.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card p-3">
+            <h5 class="font-weight-bold mb-3 text-success"><i class="bi bi-calendar-plus me-2"></i>Contas a Receber (Pendentes)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Cliente/Descrição</th>
+                            <th>Vencimento</th>
+                            <th>Valor</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cr in contas_receber %}
+                        <tr>
+                            <td><strong>{{ cr.cliente.nome }}</strong></td>
+                            <td>{{ cr.vencimento.strftime('%d/%m/%Y') }}</td>
+                            <td class="font-weight-bold text-success">R$ {{ cr.valor|round(2) }}</td>
+                            <td>
+                                <form action="{{ url_for('financeiro.receber_conta', id=cr.id) }}" method="POST" onsubmit="return confirm('Deseja registrar o recebimento total desta conta?')">
+                                    <button type="submit" class="btn btn-sm btn-success py-0 px-2">Receber</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted small">Nenhuma conta a receber pendente.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Histórico de Caixa (Extrato) -->
+    <div class="col-md-6">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-list-stars me-2"></i>Extrato de Caixa (Mês Atual)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Descrição</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in lancamentos %}
+                        <tr>
+                            <td>{{ l.data.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if l.tipo == 'receita' %}
+                                <span class="badge bg-success">Receita</span>
+                                {% else %}
+                                <span class="badge bg-danger">Despesa</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ l.descricao }}</td>
+                            <td class="font-weight-bold {% if l.tipo == 'receita' %}text-success{% else %}text-danger{% endif %}">
+                                R$ {{ l.valor|round(2) }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted small">Nenhum lançamento no período filtrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

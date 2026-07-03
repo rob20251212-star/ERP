@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Compras - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Relatório de Compras</h2>
+        <p class="text-muted">Acompanhamento consolidado de entradas e valoração de custos.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('relatorios.exportar_csv', tipo='compras') }}" class="btn btn-outline-success me-2"><i class="bi bi-filetype-csv me-1"></i>Exportar CSV</a>
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card p-3 mb-4 d-print-none">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Ano</label>
+            <select class="form-select" name="ano">
+                {% for a in range(2023, 2029) %}
+                <option value="{{ a }}" {% if a|string == ano %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Data Inicial</label>
+            <input type="date" class="form-control" name="data_ini" value="{{ data_ini }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Data Final</label>
+            <input type="date" class="form-control" name="data_fim" value="{{ data_fim }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<!-- Consolidados -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card p-3">
+            <span class="text-muted small">Custo Total de Compras no Período (Com Frete)</span>
+            <h4 class="font-weight-bold mt-1 m-0 text-danger">R$ {{ total|round(2) }}</h4>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Matéria-Prima</th>
+                    <th>Fornecedor</th>
+                    <th>Quantidade</th>
+                    <th>Preço Unitário</th>
+                    <th>Frete Unitário</th>
+                    <th>Total</th>
+                    <th>Nº NF</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in compras %}
+                <tr>
+                    <td>{{ c.data.strftime('%d/%m/%Y') }}</td>
+                    <td><strong>{{ c.materia_prima.nome }}</strong></td>
+                    <td>{{ c.fornecedor.nome if c.fornecedor else 'N/A' }}</td>
+                    <td>{{ c.quantidade_sacos }}</td>
+                    <td>R$ {{ c.preco_unitario|round(2) }}</td>
+                    <td>R$ {{ c.frete_por_saco|round(4) }}</td>
+                    <td class="font-weight-bold text-danger">R$ {{ c.total_com_frete|round(2) }}</td>
+                    <td><span class="badge bg-secondary-subtle text-secondary">{{ c.numero_nf or 's/n' }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">Nenhuma compra registrada para os filtros aplicados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

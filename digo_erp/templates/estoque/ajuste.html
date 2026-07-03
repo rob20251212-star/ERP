@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajuste de Estoque - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h4 class="font-weight-bold mb-4"><i class="bi bi-sliders me-2 text-warning"></i>Ajuste de Estoque (Inventário)</h4>
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="tipo_item" class="form-label text-muted small">Tipo de Item *</label>
+                    <select class="form-select" id="tipo_item" name="tipo_item" required>
+                        <option value="mp">Matéria-Prima / Embalagem</option>
+                        <option value="produto">Produto Acabado (Argamassa)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3" id="mp_select_group">
+                    <label for="mp_id" class="form-label text-muted small">Insumo a Ajustar *</label>
+                    <select class="form-select" id="mp_id" name="mp_id">
+                        <option value="">Selecione...</option>
+                        {% for mp in mps %}
+                        <option value="{{ mp.id }}" data-saldo="{{ mp.estoque_atual }}">{{ mp.nome }} (Atual: {{ mp.estoque_atual|round(2) }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label text-muted small">Saldo Atual Estimado</label>
+                        <input type="text" class="form-control" id="saldo_atual_preview" readonly disabled value="0.00">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="novo_saldo" class="form-label text-muted small">Novo Saldo Real Contado *</label>
+                        <input type="number" step="0.01" class="form-control" id="novo_saldo" name="novo_saldo" required placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="motivo" class="form-label text-muted small">Motivo do Ajuste *</label>
+                    <input type="text" class="form-control" id="motivo" name="motivo" required placeholder="Ex: Inventário rotativo, perda, quebra...">
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('estoque.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-check-circle me-1"></i>Confirmar Ajuste</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const itemType = document.getElementById("tipo_item");
+    const mpSelect = document.getElementById("mp_id");
+    const mpGroup = document.getElementById("mp_select_group");
+    const preview = document.getElementById("saldo_atual_preview");
+
+    const prodSaldo = {{ produto.estoque_atual if produto else 0 }};
+
+    function updatePreview() {
+        if (itemType.value === "produto") {
+            mpGroup.style.display = "none";
+            mpSelect.removeAttribute("required");
+            preview.value = prodSaldo.toFixed(2);
+        } else {
+            mpGroup.style.display = "block";
+            mpSelect.setAttribute("required", "required");
+            const selected = mpSelect.options[mpSelect.selectedIndex];
+            const saldo = selected ? parseFloat(selected.getAttribute("data-saldo")) : 0;
+            preview.value = (saldo || 0).toFixed(2);
+        }
+    }
+
+    itemType.addEventListener("change", updatePreview);
+    mpSelect.addEventListener("change", updatePreview);
+    // Initial trigger
+    updatePreview();
+});
+</script>
+{% endblock %}

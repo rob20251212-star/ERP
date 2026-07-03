@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Vendedores - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Vendedores</h2>
+        <p class="text-muted">Gestão comercial, comissões e performance de equipe.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('vendedores.novo') }}" class="btn btn-primary"><i class="bi bi-person-badge me-2"></i>Novo Vendedor</a>
+    </div>
+</div>
+
+<div class="card p-3 mb-4">
+    <h5 class="font-weight-bold mb-3"><i class="bi bi-trophy me-2 text-warning"></i>Ranking de Vendedores</h5>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Classificação</th>
+                    <th>Nome</th>
+                    <th>Comissão Padrão</th>
+                    <th>Qtd Sacos Vendidos</th>
+                    <th>Total Faturado</th>
+                    <th>Lucro Gerado</th>
+                    <th>Total Comissões</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in vendedores %}
+                <tr>
+                    <td>
+                        {% if loop.index == 1 %}
+                        <span class="badge bg-warning text-dark"><i class="bi bi-award-fill me-1"></i>1º lugar</span>
+                        {% elif loop.index == 2 %}
+                        <span class="badge bg-secondary-subtle text-dark">2º lugar</span>
+                        {% elif loop.index == 3 %}
+                        <span class="badge bg-bronze-subtle text-dark">3º lugar</span>
+                        {% else %}
+                        <span class="text-muted">{{ loop.index }}º</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ v.nome }}</strong></td>
+                    <td>{{ v.comissao_pct }}%</td>
+                    <td>{{ v.quantidade_sacos }} sacos</td>
+                    <td class="text-success font-weight-bold">R$ {{ v.total_vendido|round(2) }}</td>
+                    <td class="text-success">R$ {{ v.lucro_gerado|round(2) }}</td>
+                    <td class="text-primary font-weight-bold">R$ {{ v.total_comissao|round(2) }}</td>
+                    <td>
+                        <a href="{{ url_for('vendedores.detalhe', id=v.id) }}" class="btn btn-sm btn-outline-info" title="Detalhes"><i class="bi bi-eye-fill"></i></a>
+                        <a href="{{ url_for('vendedores.editar', id=v.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil-fill"></i></a>
+                        <form action="{{ url_for('vendedores.excluir', id=v.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deseja arquivar este vendedor?')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Arquivar"><i class="bi bi-trash-fill"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">Nenhum vendedor cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

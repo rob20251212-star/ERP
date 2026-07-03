@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Estoque - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Controle de Estoque</h2>
+        <p class="text-muted">Painel de saldos, alertas de reposição e movimentações de mercadorias.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('estoque.ajuste') }}" class="btn btn-outline-warning me-2"><i class="bi bi-sliders me-2"></i>Ajuste / Inventário</a>
+        <a href="{{ url_for('estoque.historico') }}" class="btn btn-primary"><i class="bi bi-clock-history me-2"></i>Histórico de Movimentações</a>
+    </div>
+</div>
+
+<!-- Alertas de Estoque Mínimo -->
+{% if alertas %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-warning bg-warning-subtle text-warning-emphasis p-3">
+            <h6 class="font-weight-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Insumos abaixo do nível de segurança!</h6>
+            <ul class="mb-0">
+                {% for a in alertas %}
+                <li><strong>{{ a.nome }}</strong> — Saldo atual: {{ a.atual|round(2) }} {{ a.unidade }} (Mínimo recomendado: {{ a.minimo }} {{ a.unidade }}).</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Grade de Insumos & Produto Acabado -->
+<div class="row g-4">
+    <!-- Produto Acabado -->
+    <div class="col-md-4">
+        <div class="card h-100 border-indigo">
+            <div class="card-header bg-indigo-subtle border-indigo p-3">
+                <h5 class="card-title font-weight-bold m-0"><i class="bi bi-box-seam me-2 text-indigo"></i>Produto Final</h5>
+            </div>
+            <div class="card-body p-4 text-center">
+                <span class="text-muted small text-uppercase d-block mb-1">Saldo em Estoque</span>
+                <h1 class="font-weight-bold text-indigo display-5">{{ produto.estoque_atual|round(0) if produto else 0 }}</h1>
+                <span class="text-muted">sacos de 25 kg</span>
+                
+                <div class="border-top mt-4 pt-3 text-start small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Valor Estimado:</span>
+                        <strong class="text-success">R$ {{ (produto.valor_em_estoque if produto else 0)|round(2) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Estoque Mínimo:</span>
+                        <span>{{ produto.estoque_minimo if produto else 0 }} sacos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Insumos -->
+    <div class="col-md-8">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-inboxes me-2"></i>Matérias-Primas & Embalagens</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Insumo</th>
+                            <th>Categoria</th>
+                            <th>Saldo Atual</th>
+                            <th>Mínimo</th>
+                            <th>Valor em Estoque</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mp in mps %}
+                        <tr>
+                            <td><strong>{{ mp.nome }}</strong></td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">{{ mp.tipo|capitalize }}</span></td>
+                            <td class="font-weight-bold">{{ mp.estoque_atual|round(2) }} {% if mp.tipo in ('embalagem', 'adesivo') %}un{% else %}sacos{% endif %}</td>
+                            <td>{{ mp.estoque_minimo }}</td>
+                            <td>R$ {{ mp.valor_em_estoque|round(2) }}</td>
+                            <td>
+                                {% if mp.abaixo_minimo %}
+                                <span class="badge bg-danger">Comprar</span>
+                                {% else %}
+                                <span class="badge bg-success">Ok</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

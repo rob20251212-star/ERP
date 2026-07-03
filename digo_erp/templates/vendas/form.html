@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Venda - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card p-4">
+            <h4 class="font-weight-bold mb-4"><i class="bi bi-cash-coin me-2 text-primary"></i>Registrar Nova Venda</h4>
+            
+            <form method="POST" id="vendaForm">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="data" class="form-label text-muted small">Data da Venda *</label>
+                        <input type="date" class="form-control" id="data" name="data" value="{{ hoje }}" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="cliente_id" class="form-label text-muted small">Cliente *</label>
+                        <select class="form-select" id="cliente_id" name="cliente_id" required>
+                            <option value="">Selecione...</option>
+                            {% for c in clientes %}
+                            <option value="{{ c.id }}">{{ c.nome }} ({{ c.cidade }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="vendedor_id" class="form-label text-muted small">Vendedor / Canal</label>
+                        <select class="form-select calc-trigger" id="vendedor_id" name="vendedor_id" data-comm-pct="0">
+                            <option value="" data-comm-pct="0">Venda Direta (Sem comissão)</option>
+                            {% for v in vendedores %}
+                            <option value="{{ v.id }}" data-comm-pct="{{ v.comissao_pct }}">{{ v.nome }} ({{ v.comissao_pct }}%)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="quantidade_sacos" class="form-label text-muted small">Qtd (Sacos) *</label>
+                        <input type="number" class="form-control calc-trigger text-center font-weight-bold" id="quantidade_sacos" name="quantidade_sacos" min="1" required placeholder="0">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="preco_unitario" class="form-label text-muted small">Preço Unitário (R$) *</label>
+                        <input type="number" step="0.01" class="form-control calc-trigger text-center font-weight-bold" id="preco_unitario" name="preco_unitario" required placeholder="0.00">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="desconto" class="form-label text-muted small">Desconto Total (R$)</label>
+                        <input type="number" step="0.01" class="form-control calc-trigger text-center" id="desconto" name="desconto" value="0.00">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="frete" class="form-label text-muted small">Valor do Frete (R$)</label>
+                        <input type="number" step="0.01" class="form-control calc-trigger text-center" id="frete" name="frete" value="0.00">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="tipo_frete" class="form-label text-muted small">Tipo de Frete *</label>
+                        <select class="form-select calc-trigger" id="tipo_frete" name="tipo_frete" required>
+                            <option value="FOB" selected>FOB (Fretado pelo Cliente)</option>
+                            <option value="CIF">CIF (Fretado por Nós - Soma ao Líquido)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="forma_pagamento" class="form-label text-muted small">Forma de Pagamento *</label>
+                        <select class="form-select" id="forma_pagamento" name="forma_pagamento" required>
+                            <option value="A VISTA">À Vista (Dinheiro / PIX)</option>
+                            <option value="CHEQUE">Cheque</option>
+                            <option value="PRAZO">Faturado a Prazo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3" id="prazo_group">
+                        <label for="prazo_dias" class="form-label text-muted small">Prazo de Vencimento (Dias) *</label>
+                        <input type="number" class="form-control" id="prazo_dias" name="prazo_dias" value="0" min="0">
+                    </div>
+                </div>
+
+                <!-- Painel Informativo de Margem e Lucro -->
+                <div class="card p-3 mb-4 bg-light border-secondary-subtle">
+                    <h6 class="font-weight-bold mb-3"><i class="bi bi-bar-chart-fill me-1 text-primary"></i>Resumo da Operação (Tempo Real)</h6>
+                    <div class="row text-center">
+                        <div class="col-md-3 mb-2">
+                            <span class="d-block small text-muted">Subtotal Bruto</span>
+                            <strong id="info_bruto" class="fs-5 text-dark">R$ 0,00</strong>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <span class="d-block small text-muted">Receita Líquida</span>
+                            <strong id="info_liquido" class="fs-5 text-success">R$ 0,00</strong>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <span class="d-block small text-muted">Lucro Estimado</span>
+                            <strong id="info_lucro" class="fs-5 text-success">R$ 0,00</strong>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <span class="d-block small text-muted">Margem / Comissão</span>
+                            <strong id="info_margem" class="fs-5 text-primary">0,0% / R$ 0,00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="observacoes" class="form-label text-muted small">Observações da Venda</label>
+                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3" placeholder="Ex: Deixar na obra da Construmix..."></textarea>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('vendas.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-cart-check me-2"></i>Salvar Venda</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let custoUnitario = 0;
+    
+    // Fetch product pricing parameters from the backend
+    fetch("{{ url_for('vendas.api_preco_custo') }}")
+        .then(res => res.json())
+        .then(data => {
+            custoUnitario = data.custo || 0;
+            if (data.preco_padrao) {
+                document.getElementById("preco_unitario").value = data.preco_padrao.toFixed(2);
+            }
+        });
+
+    const qtyInput = document.getElementById("quantidade_sacos");
+    const priceInput = document.getElementById("preco_unitario");
+    const discountInput = document.getElementById("desconto");
+    const freightInput = document.getElementById("frete");
+    const typeFreight = document.getElementById("tipo_frete");
+    const sellerSelect = document.getElementById("vendedor_id");
+    const paySelect = document.getElementById("forma_pagamento");
+    const termInput = document.getElementById("prazo_dias");
+    const termGroup = document.getElementById("prazo_group");
+
+    // Toggle Term visibility
+    paySelect.addEventListener("change", function() {
+        if (this.value === "PRAZO") {
+            termGroup.style.display = "block";
+            termInput.value = 30;
+        } else {
+            termGroup.style.display = "none";
+            termInput.value = 0;
+        }
+    });
+    // Trigger initial state
+    paySelect.dispatchEvent(new Event("change"));
+
+    function calculateSale() {
+        const qty = parseInt(qtyInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        const discount = parseFloat(discountInput.value) || 0;
+        const freight = parseFloat(freightInput.value) || 0;
+        const commPct = parseFloat(sellerSelect.options[sellerSelect.selectedIndex].getAttribute("data-comm-pct")) || 0;
+
+        const subtotal = qty * price;
+        const netValue = subtotal - discount + (typeFreight.value === "CIF" ? freight : 0);
+        const totalCost = custoUnitario * qty;
+        const profit = netValue - totalCost;
+        const marginPct = netValue ? (profit / netValue) * 100 : 0;
+        const commission = netValue * (commPct / 100);
+
+        document.getElementById("info_bruto").innerText = "R$ " + subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        document.getElementById("info_liquido").innerText = "R$ " + netValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        document.getElementById("info_lucro").innerText = "R$ " + profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        document.getElementById("info_margem").innerText = marginPct.toFixed(1) + "% / R$ " + commission.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    }
+
+    document.querySelectorAll(".calc-trigger").forEach(input => {
+        input.addEventListener("input", calculateSale);
+    });
+    sellerSelect.addEventListener("change", calculateSale);
+    typeFreight.addEventListener("change", calculateSale);
+});
+</script>
+{% endblock %}

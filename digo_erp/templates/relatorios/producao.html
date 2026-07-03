@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Produção - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Relatório de Produção</h2>
+        <p class="text-muted">Acompanhamento de fabricação e insumos consolidados.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('relatorios.exportar_csv', tipo='producao') }}" class="btn btn-outline-success me-2"><i class="bi bi-filetype-csv me-1"></i>Exportar CSV</a>
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card p-3 mb-4 d-print-none">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Ano</label>
+            <select class="form-select" name="ano">
+                {% for a in range(2023, 2029) %}
+                <option value="{{ a }}" {% if a|string == ano %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Data Inicial</label>
+            <input type="date" class="form-control" name="data_ini" value="{{ data_ini }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Data Final</label>
+            <input type="date" class="form-control" name="data_fim" value="{{ data_fim }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<!-- Consolidados -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <span class="text-muted small">Volume Total Produzido</span>
+            <h4 class="font-weight-bold mt-1 m-0 text-primary">{{ total_sacos }} sacos ({{ total_sacos * 25 }} kg de argamassa)</h4>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3">
+            <span class="text-muted small">Custo Total de Fabricação no Período</span>
+            <h4 class="font-weight-bold mt-1 m-0 text-danger">R$ {{ total_custo|round(2) }}</h4>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Lote</th>
+                    <th>Quantidade Produzida</th>
+                    <th>Responsável</th>
+                    <th>Custo Unitário</th>
+                    <th>Custo Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in producoes %}
+                <tr>
+                    <td>{{ p.data.strftime('%d/%m/%Y') }}</td>
+                    <td><code>{{ p.lote }}</code></td>
+                    <td>{{ p.quantidade_sacos }} sacos</td>
+                    <td>{{ p.responsavel or 'N/A' }}</td>
+                    <td>R$ {{ p.custo_por_saco|round(2) }}</td>
+                    <td class="font-weight-bold text-danger">R$ {{ p.custo_total|round(2) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted">Nenhuma ordem de produção localizada para os filtros.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastro de Vendedor - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h4 class="font-weight-bold mb-4"><i class="bi bi-person-badge me-2 text-primary"></i>{{ titulo }}</h4>
+            
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="nome" class="form-label text-muted small">Nome Completo *</label>
+                    <input type="text" class="form-control" id="nome" name="nome" value="{{ vendedor.nome if vendedor else '' }}" required placeholder="Ex: PALOMA UCHOA">
+                </div>
+
+                <div class="mb-3">
+                    <label for="comissao_pct" class="form-label text-muted small">Percentual de Comissão (%) *</label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" class="form-control" id="comissao_pct" name="comissao_pct" value="{{ vendedor.comissao_pct if vendedor else '0.00' }}" required>
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="telefone" class="form-label text-muted small">Telefone</label>
+                        <input type="text" class="form-control" id="telefone" name="telefone" value="{{ vendedor.telefone if vendedor else '' }}" placeholder="(85) 99999-9999">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label text-muted small">E-mail</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ vendedor.email if vendedor else '' }}" placeholder="email@vendas.com">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-9 mb-3">
+                        <label for="cidade" class="form-label text-muted small">Cidade</label>
+                        <input type="text" class="form-control" id="cidade" name="cidade" value="{{ vendedor.cidade if vendedor else '' }}" placeholder="Cidade">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="estado" class="form-label text-muted small">UF</label>
+                        <input type="text" class="form-control" id="estado" name="estado" maxlength="2" value="{{ vendedor.estado if vendedor else '' }}" placeholder="CE">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('vendedores.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Salvar Vendedor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

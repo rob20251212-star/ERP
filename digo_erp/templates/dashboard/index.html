@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="font-weight-bold">Dashboard</h2>
+        <p class="text-muted">Visão geral do desempenho e controle operacional.</p>
+    </div>
+</div>
+
+<!-- Alertas se houver -->
+{% if total_alertas > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-danger-subtle border-danger text-danger p-3">
+            <h5 class="alert-heading font-weight-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Atenção: Existem alertas ativos!</h5>
+            <ul class="mb-0">
+                {% for a in alertas_estoque %}
+                <li><strong>Estoque Baixo:</strong> {{ a.nome }} está com saldo de {{ a.atual }} {{ a.unidade }} (Mínimo: {{ a.minimo }}).</li>
+                {% endfor %}
+                {% for c in alertas_contas %}
+                <li><strong>Conta Vencida:</strong> "{{ c.descricao }}" de R$ {{ c.valor|round(2) }} venceu em {{ c.vencimento.strftime('%d/%m/%Y') }} ({{ c.dias_atraso }} dias de atraso).</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- KPIs Operacionais & Financeiros -->
+<div class="row g-3 mb-4">
+    <!-- Produção do Mês -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase">Prod. Mês (Sacos)</span>
+                    <h3 class="font-weight-bold mt-1 mb-0">{{ prod_mes }}</h3>
+                </div>
+                <div class="kpi-icon text-primary"><i class="bi bi-building-gear"></i></div>
+            </div>
+            <div class="mt-2 text-muted small">
+                <span>Hoje: <strong>{{ prod_hoje }}</strong> | Ano: <strong>{{ prod_ano }}</strong></span>
+            </div>
+        </div>
+    </div>
+    <!-- Vendas do Mês -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase">Vendas Mês</span>
+                    <h3 class="font-weight-bold mt-1 mb-0">R$ {{ vendas_mes|round(2) }}</h3>
+                </div>
+                <div class="kpi-icon text-success"><i class="bi bi-cart-check"></i></div>
+            </div>
+            <div class="mt-2 text-muted small">
+                <span>Qtd Sacos: <strong>{{ qtd_vendas_mes }}</strong></span>
+            </div>
+        </div>
+    </div>
+    <!-- Lucro Bruto / Líquido do Mês -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase">Lucro Líquido Mês</span>
+                    <h3 class="font-weight-bold mt-1 mb-0 text-success">R$ {{ lucro_mes|round(2) }}</h3>
+                </div>
+                <div class="kpi-icon text-warning"><i class="bi bi-cash-coin"></i></div>
+            </div>
+            <div class="mt-2 text-muted small">
+                <span>Ano atual: <strong>R$ {{ lucro_ano|round(2) }}</strong></span>
+            </div>
+        </div>
+    </div>
+    <!-- Valor em Estoque -->
+    <div class="col-md-3 col-sm-6">
+        <div class="card kpi-card">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="text-muted small text-uppercase">Valor em Estoque</span>
+                    <h3 class="font-weight-bold mt-1 mb-0">R$ {{ (valor_estoque_mp + valor_estoque_produto)|round(2) }}</h3>
+                </div>
+                <div class="kpi-icon text-info"><i class="bi bi-boxes"></i></div>
+            </div>
+            <div class="mt-2 text-muted small">
+                <span>MP: <strong>R$ {{ valor_estoque_mp|round(2) }}</strong> | Acabado: <strong>R$ {{ valor_estoque_produto|round(2) }}</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fluxo de Caixa do Mês -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small">Receitas (Mês)</span>
+                <h4 class="text-success font-weight-bold m-0">R$ {{ resumo_fin.receitas|round(2) }}</h4>
+            </div>
+            <i class="bi bi-arrow-up-right-circle-fill text-success fs-3"></i>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small">Despesas (Mês)</span>
+                <h4 class="text-danger font-weight-bold m-0">R$ {{ resumo_fin.despesas|round(2) }}</h4>
+            </div>
+            <i class="bi bi-arrow-down-left-circle-fill text-danger fs-3"></i>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-muted small">Saldo de Caixa (Mês)</span>
+                <h4 class="{% if resumo_fin.saldo >= 0 %}text-success{% else %}text-danger{% endif %} font-weight-bold m-0">R$ {{ resumo_fin.saldo|round(2) }}</h4>
+            </div>
+            <i class="bi bi-wallet2 text-primary fs-3"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4 g-3">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5 class="card-title font-weight-bold mb-3"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Faturamento Mensal ({{ ano_atual }})</h5>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="chartVendas"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5 class="card-title font-weight-bold mb-3"><i class="bi bi-activity me-2 text-info"></i>Produção Mensal (Sacos)</h5>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="chartProducao"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimas Operações -->
+<div class="row g-3">
+    <!-- Últimas Vendas -->
+    <div class="col-md-8">
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="font-weight-bold m-0"><i class="bi bi-cart4 me-2 text-success"></i>Últimas Vendas</h5>
+                <a href="{{ url_for('vendas.index') }}" class="btn btn-sm btn-outline-primary">Ver Todas</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Vendedor</th>
+                            <th>Qtd</th>
+                            <th>Total</th>
+                            <th>Forma Pag.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in ultimas_vendas %}
+                        <tr>
+                            <td>{{ v.data.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ v.cliente.nome }}</td>
+                            <td>{{ v.vendedor.nome if v.vendedor else 'Venda Direta' }}</td>
+                            <td>{{ v.quantidade_sacos }}</td>
+                            <td>R$ {{ v.valor_liquido|round(2) }}</td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">{{ v.forma_pagamento }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">Nenhuma venda registrada ainda.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Últimas Produções -->
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="font-weight-bold m-0"><i class="bi bi-gear-wide-connected me-2 text-primary"></i>Últimas Produções</h5>
+                <a href="{{ url_for('producao.index') }}" class="btn btn-sm btn-outline-primary">Ver Todas</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Lote</th>
+                            <th>Qtd (Sacos)</th>
+                            <th>Custo Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in ultimas_producoes %}
+                        <tr>
+                            <td><code>{{ p.lote }}</code></td>
+                            <td>{{ p.quantidade_sacos }}</td>
+                            <td>R$ {{ p.custo_total|round(2) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">Nenhuma produção registrada ainda.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Pass Python lists directly into JavaScript
+    const vendasMensais = {{ vendas_por_mes|tojson }};
+    const producaoMensal = {{ producao_por_mes|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

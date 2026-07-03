@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Matérias-Primas - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Matérias-Primas</h2>
+        <p class="text-muted">Gestão de insumos, custos e precificação.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('materias_primas.produto_final') }}" class="btn btn-primary"><i class="bi bi-box-seam me-2"></i>Ver Produto Final</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Lista de Insumos -->
+    <div class="col-md-7">
+        <div class="card p-3">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-inboxes me-2"></i>Insumos Cadastrados</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Estoque Atual</th>
+                            <th>Preço Saco</th>
+                            <th>Frete</th>
+                            <th>Custo por Kg</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mp in mps %}
+                        <tr class="{% if mp.abaixo_minimo %}table-warning{% endif %}">
+                            <td>
+                                <strong>{{ mp.nome }}</strong>
+                                {% if mp.abaixo_minimo %}
+                                <span class="badge bg-warning text-dark ms-1">Estoque Baixo</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">{{ mp.tipo }}</span></td>
+                            <td>{{ mp.estoque_atual|round(2) }} {% if mp.tipo in ('embalagem', 'adesivo') %}un{% else %}sacos{% endif %}</td>
+                            <td>R$ {{ mp.preco_saco|round(2) }}</td>
+                            <td>R$ {{ mp.frete_saco|round(2) }}</td>
+                            <td>
+                                {% if mp.tipo in ('embalagem', 'adesivo') %}
+                                N/A
+                                {% else %}
+                                R$ {{ mp.custo_por_kg|round(4) }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('materias_primas.editar', id=mp.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-fill"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Composição & Custo Calculado do Saco -->
+    <div class="col-md-5">
+        <div class="card p-4 bg-indigo-subtle border-indigo">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-calculator me-2 text-indigo"></i>Precificação e Custos (Fórmula)</h5>
+            <p class="text-muted small">Cálculo proporcional de custo do saco de 25 kg do produto final.</p>
+
+            <ul class="list-group list-group-flush mb-4 bg-transparent">
+                {% for item in breakdown.breakdown %}
+                <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0 py-2">
+                    <div>
+                        <span class="font-weight-bold">{{ item.nome }}</span>
+                        <div class="small text-muted">{{ item.qtd_uso }} {% if item.tipo in ('embalagem', 'adesivo') %}un{% else %}kg{% endif %}</div>
+                    </div>
+                    <span class="font-weight-bold">R$ {{ item.custo_proporcional|round(2) }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+
+            <div class="border-top pt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Custo Total do Saco (25 kg)</span>
+                    <h4 class="font-weight-bold text-danger m-0">R$ {{ breakdown.custo_total|round(2) }}</h4>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Custo por Kg</span>
+                    <span class="font-weight-bold">R$ {{ breakdown.custo_por_kg|round(4) }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Preço de Venda Sugerido ({{ breakdown.margem_pct }}% margem)</span>
+                    <h4 class="font-weight-bold text-success m-0">R$ {{ breakdown.preco_venda|round(2) }}</h4>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Lucro por Saco</span>
+                    <span class="font-weight-bold text-success">R$ {{ breakdown.lucro_por_saco|round(2) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

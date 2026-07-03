@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Vendas - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Relatório de Vendas</h2>
+        <p class="text-muted">Filtros avançados de vendas e faturamento.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('relatorios.exportar_csv', tipo='vendas') }}" class="btn btn-outline-success me-2"><i class="bi bi-filetype-csv me-1"></i>Exportar CSV</a>
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card p-3 mb-4 d-print-none">
+    <form method="GET" class="row g-2">
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Cliente</label>
+            <select class="form-select" name="cliente_id">
+                <option value="">Todos</option>
+                {% for c in clientes %}
+                <option value="{{ c.id }}" {% if c.id|string == cliente_id %}selected{% endif %}>{{ c.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted">Vendedor</label>
+            <select class="form-select" name="vendedor_id">
+                <option value="">Todos</option>
+                {% for v in vendedores %}
+                <option value="{{ v.id }}" {% if v.id|string == vendedor_id %}selected{% endif %}>{{ v.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small text-muted">Data Inicial</label>
+            <input type="date" class="form-control" name="data_ini" value="{{ data_ini }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small text-muted">Data Final</label>
+            <input type="date" class="form-control" name="data_fim" value="{{ data_fim }}">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<!-- Totais Consolidados -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3">
+            <span class="text-muted small">Qtd Total Vendida</span>
+            <h4 class="font-weight-bold mt-1 m-0">{{ total_sacos }} sacos</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <span class="text-muted small">Receita Líquida Total</span>
+            <h4 class="text-success font-weight-bold mt-1 m-0">R$ {{ total_valor|round(2) }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <span class="text-muted small">Lucro Bruto Total</span>
+            <h4 class="text-success font-weight-bold mt-1 m-0">R$ {{ total_lucro|round(2) }}</h4>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <span class="text-muted small">Comissões Totais</span>
+            <h4 class="text-primary font-weight-bold mt-1 m-0">R$ {{ total_comissao|round(2) }}</h4>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Vendedor</th>
+                    <th>Qtd (Sacos)</th>
+                    <th>Unitário</th>
+                    <th>Líquido</th>
+                    <th>Comissão</th>
+                    <th>Lucro</th>
+                    <th>Margem</th>
+                    <th>Pagamento</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in vendas %}
+                <tr>
+                    <td>{{ v.data.strftime('%d/%m/%Y') }}</td>
+                    <td><strong>{{ v.cliente.nome }}</strong></td>
+                    <td>{{ v.vendedor.nome if v.vendedor else 'Direta' }}</td>
+                    <td>{{ v.quantidade_sacos }}</td>
+                    <td>R$ {{ v.preco_unitario|round(2) }}</td>
+                    <td class="text-success font-weight-bold">R$ {{ v.valor_liquido|round(2) }}</td>
+                    <td>R$ {{ v.comissao|round(2) }}</td>
+                    <td class="text-success">R$ {{ v.lucro|round(2) }}</td>
+                    <td>{{ v.margem }}%</td>
+                    <td><span class="badge bg-secondary-subtle text-secondary">{{ v.forma_pagamento }}</span></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted">Nenhuma venda encontrada para os filtros aplicados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

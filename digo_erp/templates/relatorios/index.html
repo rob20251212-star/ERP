@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatórios - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="font-weight-bold">Relatórios do Sistema</h2>
+        <p class="text-muted">Acesse análises consolidadas e relatórios detalhados com exportação em múltiplos formatos.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Relatórios de Vendas e Faturamento -->
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-2 text-success"><i class="bi bi-cash-coin me-2"></i>Vendas & Comissões</h5>
+            <p class="text-muted small">Análise de vendas, faturamento por cliente, por vendedor, margens de lucro e comissões devidas.</p>
+            <div class="mt-auto">
+                <a href="{{ url_for('relatorios.vendas') }}" class="btn btn-sm btn-outline-success w-100">Acessar Relatório</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios de Produção -->
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-2 text-primary"><i class="bi bi-building-gear me-2"></i>Produção & Lotes</h5>
+            <p class="text-muted small">Totais fabricados, controle de lotes, datas de produção, e custo acumulado de fabricação.</p>
+            <div class="mt-auto">
+                <a href="{{ url_for('relatorios.producao') }}" class="btn btn-sm btn-outline-primary w-100">Acessar Relatório</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios Financeiros -->
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-2 text-warning"><i class="bi bi-wallet2 me-2"></i>Fluxo de Caixa & Extrato</h5>
+            <p class="text-muted small">Extrato consolidado de entradas e saídas, faturamento líquido e controle de saldos por competência.</p>
+            <div class="mt-auto">
+                <a href="{{ url_for('relatorios.financeiro') }}" class="btn btn-sm btn-outline-warning text-dark w-100">Acessar Relatório</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios de Estoque -->
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-2 text-info"><i class="bi bi-boxes me-2"></i>Inventário & Níveis</h5>
+            <p class="text-muted small">Valor monetário do estoque de matérias-primas e produto acabado, e auditoria de reposição.</p>
+            <div class="mt-auto">
+                <a href="{{ url_for('relatorios.estoque') }}" class="btn btn-sm btn-outline-info w-100">Acessar Relatório</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios de Compras -->
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-2 text-danger"><i class="bi bi-cart4 me-2"></i>Compras & Preço Médio</h5>
+            <p class="text-muted small">Histórico de compras de insumos por fornecedor, controle de fretes e reajustes de preço médio.</p>
+            <div class="mt-auto">
+                <a href="{{ url_for('relatorios.compras') }}" class="btn btn-sm btn-outline-danger w-100">Acessar Relatório</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios de Clientes -->
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-2 text-secondary"><i class="bi bi-people me-2"></i>Clientes (Ranking)</h5>
+            <p class="text-muted small">Ranking dos clientes que mais compraram, valor acumulado, data da última compra e inadimplência.</p>
+            <div class="mt-auto">
+                <a href="{{ url_for('relatorios.clientes') }}" class="btn btn-sm btn-outline-secondary w-100">Acessar Relatório</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios de Vendedores -->
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <h5 class="font-weight-bold mb-2 text-dark"><i class="bi bi-person-badge me-2"></i>Desempenho de Vendedores</h5>
+            <p class="text-muted small">Análise comparativa de vendas por vendedor, lucro líquido gerado por canal e ranking comercial.</p>
+            <div class="mt-auto">
+                <a href="{{ url_for('relatorios.vendedores') }}" class="btn btn-sm btn-outline-dark w-100">Acessar Relatório</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

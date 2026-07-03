@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhe da Venda - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Venda #{{ venda.id }}</h2>
+        <p class="text-muted">Detalhamento comercial, financeiro e comissões da venda.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('vendas.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Voltar</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Resumo Comercial -->
+    <div class="col-md-6">
+        <div class="card p-4 h-100">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-file-earmark-spreadsheet me-2 text-primary"></i>Ficha da Venda</h5>
+            <table class="table table-sm">
+                <tbody>
+                    <tr>
+                        <td class="text-muted">Data da Venda</td>
+                        <td><strong>{{ venda.data.strftime('%d/%m/%Y') }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Cliente</td>
+                        <td><strong><a href="{{ url_for('clientes.detalhe', id=venda.cliente_id) }}">{{ venda.cliente.nome }}</a></strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Vendedor</td>
+                        <td><strong>{{ venda.vendedor.nome if venda.vendedor else 'Venda Direta' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Quantidade</td>
+                        <td>{{ venda.quantidade_sacos }} sacos</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Preço Unitário</td>
+                        <td>R$ {{ venda.preco_unitario|round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Desconto Concedido</td>
+                        <td>R$ {{ venda.desconto|round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Valor do Frete</td>
+                        <td>R$ {{ venda.frete|round(2) }} ({{ venda.tipo_frete }})</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Indicadores Financeiros da Venda -->
+    <div class="col-md-6">
+        <div class="card p-4 h-100">
+            <h5 class="font-weight-bold mb-3"><i class="bi bi-cash-stack me-2 text-success"></i>Detalhamento Financeiro</h5>
+            <table class="table table-sm">
+                <tbody>
+                    <tr>
+                        <td class="text-muted">Valor Bruto</td>
+                        <td>R$ {{ venda.valor_bruto|round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Valor Líquido (Receita)</td>
+                        <td class="font-weight-bold text-success">R$ {{ venda.valor_liquido|round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Custo Total de Fabricação</td>
+                        <td class="text-danger">R$ {{ venda.custo_total|round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Lucro Estimado</td>
+                        <td class="font-weight-bold {% if venda.lucro >= 0 %}text-success{% else %}text-danger{% endif %}">R$ {{ venda.lucro|round(2) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Margem de Lucro</td>
+                        <td><span class="badge bg-primary-subtle text-primary">{{ venda.margem }}%</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Comissão do Vendedor</td>
+                        <td class="text-primary">R$ {{ venda.comissao|round(2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Lançamento de Pagamento (Se a Prazo) -->
+{% if venda.status_pagamento != 'pago' %}
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card p-4 border-warning bg-warning-subtle">
+            <h5 class="font-weight-bold text-warning-emphasis mb-3"><i class="bi bi-hourglass-split me-2"></i>Controle de Recebimento (Venda a Prazo)</h5>
+            <p class="text-muted">Esta venda possui saldo pendente de recebimento.</p>
+            
+            <div class="row align-items-center">
+                <div class="col-md-4 mb-2">
+                    <span class="text-muted small d-block">Total Líquido:</span>
+                    <strong class="fs-5">R$ {{ venda.valor_liquido|round(2) }}</strong>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <span class="text-muted small d-block">Já Recebido:</span>
+                    <strong class="fs-5 text-success">R$ {{ (venda.valor_pago or 0)|round(2) }}</strong>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <span class="text-muted small d-block">Saldo Devedor:</span>
+                    <strong class="fs-5 text-danger">R$ {{ (venda.valor_liquido - (venda.valor_pago or 0))|round(2) }}</strong>
+                </div>
+            </div>
+
+            <form action="{{ url_for('vendas.registrar_pagamento', id=venda.id) }}" method="POST" class="row g-2 mt-3 border-top pt-3">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">R$</span>
+                        <input type="number" step="0.01" class="form-control" name="valor_pago" max="{{ (venda.valor_liquido - (venda.valor_pago or 0)) }}" required placeholder="Registrar valor recebido">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-warning w-100"><i class="bi bi-check-circle-fill me-2"></i>Confirmar Recebimento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

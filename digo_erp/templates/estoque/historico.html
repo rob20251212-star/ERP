@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Histórico de Movimentações - DIGO ERP{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-sm-6">
+        <h2 class="font-weight-bold">Histórico de Movimentações</h2>
+        <p class="text-muted">Rastreabilidade completa de entradas e saídas de estoque.</p>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+        <a href="{{ url_for('estoque.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Voltar</a>
+    </div>
+</div>
+
+<div class="card p-3 mb-4">
+    <form method="GET" action="{{ url_for('estoque.historico') }}" class="row g-2">
+        <div class="col-md-5">
+            <select class="form-select" name="mp_id">
+                <option value="">Todos os Insumos...</option>
+                {% for mp in mps %}
+                <option value="{{ mp.id }}" {% if mp.id|string == mp_id %}selected{% endif %}>{{ mp.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-5">
+            <select class="form-select" name="tipo">
+                <option value="">Todos os Tipos...</option>
+                <option value="entrada" {% if tipo_filtro == 'entrada' %}selected{% endif %}>Entrada</option>
+                <option value="saida" {% if tipo_filtro == 'saida' %}selected{% endif %}>Saída</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-search me-2"></i>Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover table-sm">
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Tipo</th>
+                    <th>Item</th>
+                    <th>Quantidade</th>
+                    <th>Saldo Antes</th>
+                    <th>Saldo Depois</th>
+                    <th>Motivo</th>
+                    <th>Documento / Obs.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in movs.items %}
+                <tr>
+                    <td>{{ m.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>
+                        {% if m.tipo == 'entrada' %}
+                        <span class="badge bg-success-subtle text-success"><i class="bi bi-arrow-up-circle me-1"></i>Entrada</span>
+                        {% else %}
+                        <span class="badge bg-danger-subtle text-danger"><i class="bi bi-arrow-down-circle me-1"></i>Saída</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if m.materia_prima_id %}
+                        <strong>{{ m.materia_prima.nome }}</strong>
+                        {% elif m.produto_id %}
+                        <strong>{{ m.produto.nome }}</strong>
+                        {% endif %}
+                    </td>
+                    <td>{{ m.quantidade }}</td>
+                    <td>{{ m.saldo_antes }}</td>
+                    <td>{{ m.saldo_depois }}</td>
+                    <td><span class="badge bg-light text-dark">{{ m.motivo|capitalize }}</span></td>
+                    <td class="small text-muted">{{ m.observacoes or '' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted">Nenhuma movimentação registrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginação -->
+    {% if movs.pages > 1 %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-center">
+            {% for page in movs.iter_pages() %}
+                {% if page %}
+                    <li class="page-item {% if page == movs.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('estoque.historico', page=page, mp_id=mp_id, tipo=tipo_filtro) }}">{{ page }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
