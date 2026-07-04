@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block title %}Registrar Compra - DIGO ERP{% endblock %}
@@ -30,9 +31,10 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="fornecedor_id" class="form-label text-muted small">Fornecedor *</label>
-                        <input type="text" class="form-control" id="fornecedor_id" name="fornecedor_id" placeholder="Selecione o Fornecedor" autocomplete="off">
+                    <div class="col-md-6 mb-3 position-relative">
+                        <label for="fornecedor_nome" class="form-label text-muted small">Fornecedor *</label>
+                        <input type="text" class="form-control" id="fornecedor_nome" name="fornecedor_nome" placeholder="Digite o nome do fornecedor" autocomplete="off" required>
+                        <input type="hidden" id="fornecedor_id" name="fornecedor_id">
                         <div class="suggestion-box position-absolute bg-white border shadow rounded mt-1 w-100" style="display:none; z-index: 1000;"></div>
                     </div>
                 </div>
@@ -85,6 +87,9 @@ document.addEventListener("DOMContentLoaded", function() {
     const priceInput = document.getElementById("preco_unitario");
     const freightInput = document.getElementById("frete_total");
     const totalInput = document.getElementById("total_geral");
+    const fornecedorNomeInput = document.getElementById("fornecedor_nome");
+    const fornecedorIdInput = document.getElementById("fornecedor_id");
+    const suggestionBox = document.querySelector(".suggestion-box");
 
     function calculateTotal() {
         const qty = parseFloat(qtyInput.value) || 0;
@@ -95,6 +100,56 @@ document.addEventListener("DOMContentLoaded", function() {
         const total = subtotal + freight;
         totalInput.value = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
+
+    function clearSuggestions() {
+        suggestionBox.style.display = 'none';
+        suggestionBox.innerHTML = '';
+    }
+
+    function selectFornecedor(id, nome) {
+        fornecedorNomeInput.value = nome;
+        fornecedorIdInput.value = id;
+        clearSuggestions();
+    }
+
+    fornecedorNomeInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        fornecedorIdInput.value = '';
+        if (!query) {
+            clearSuggestions();
+            return;
+        }
+
+        fetch(`{{ url_for('fornecedores.api_buscar') }}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data.length) {
+                    clearSuggestions();
+                    return;
+                }
+
+                suggestionBox.innerHTML = '';
+                data.forEach(fornecedor => {
+                    const item = document.createElement('div');
+                    item.className = 'p-2 suggestion-item';
+                    item.style.cursor = 'pointer';
+                    item.style.borderBottom = '1px solid #f1f1f1';
+                    item.textContent = fornecedor.nome;
+                    item.addEventListener('click', () => selectFornecedor(fornecedor.id, fornecedor.nome));
+                    suggestionBox.appendChild(item);
+                });
+                suggestionBox.style.display = 'block';
+            })
+            .catch(() => {
+                clearSuggestions();
+            });
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.position-relative')) {
+            clearSuggestions();
+        }
+    });
 
     document.querySelectorAll(".calc-trigger").forEach(input => {
         input.addEventListener("input", calculateTotal);
