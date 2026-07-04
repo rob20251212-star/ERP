@@ -1,4 +1,3 @@
-
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import func
@@ -44,25 +43,29 @@ def nova():
         data_compra = datetime.strptime(request.form['data'], '%Y-%m-%d').date()
 
         fornecedor_id = request.form.get('fornecedor_id') or None
-        if not fornecedor_id:
-            fornecedor_nome = request.form.get('fornecedor_nome', '').strip()
-            if fornecedor_nome:
+        fornecedor_nome = request.form.get('fornecedor_nome', '').strip()
+        if not fornecedor_id and fornecedor_nome:
+            fornecedor = Fornecedor.query.filter(
+                Fornecedor.ativo == True,
+                func.lower(Fornecedor.nome) == fornecedor_nome.lower()
+            ).first()
+            if not fornecedor:
                 fornecedor = Fornecedor.query.filter(
                     Fornecedor.ativo == True,
-                    func.lower(Fornecedor.nome) == fornecedor_nome.lower()
+                    Fornecedor.nome.ilike(f'%{fornecedor_nome}%')
                 ).first()
-                if fornecedor:
-                    fornecedor_id = fornecedor.id
-                else:
-                    fornecedor = Fornecedor.query.filter(
-                        Fornecedor.ativo == True,
-                        Fornecedor.nome.ilike(f'%{fornecedor_nome}%')
-                    ).first()
-                    if fornecedor:
-                        fornecedor_id = fornecedor.id
+            if not fornecedor:
+                fornecedor = Fornecedor(
+                    nome=fornecedor_nome.upper(),
+                    tipo='outro',
+                    ativo=True
+                )
+                db.session.add(fornecedor)
+                db.session.flush()
+            fornecedor_id = fornecedor.id
 
         if not fornecedor_id:
-            flash('Fornecedor não encontrado. Digite um nome válido ou selecione um fornecedor sugerido.', 'danger')
+            flash('Fornecedor não informado. Digite o nome do fornecedor.', 'danger')
             return render_template('compras/form.html', mps=mps, fornecedores=fornecedores,
                                    compra=None, titulo='Nova Compra', hoje=date.today().isoformat())
 
