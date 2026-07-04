@@ -1,5 +1,7 @@
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
+from sqlalchemy import func
 from extensions import db
 from models.compra import Compra
 from models.materia_prima import MateriaPrima
@@ -41,9 +43,32 @@ def nova():
         prazo = int(request.form.get('prazo_pagamento', 0) or 0)
         data_compra = datetime.strptime(request.form['data'], '%Y-%m-%d').date()
 
+        fornecedor_id = request.form.get('fornecedor_id') or None
+        if not fornecedor_id:
+            fornecedor_nome = request.form.get('fornecedor_nome', '').strip()
+            if fornecedor_nome:
+                fornecedor = Fornecedor.query.filter(
+                    Fornecedor.ativo == True,
+                    func.lower(Fornecedor.nome) == fornecedor_nome.lower()
+                ).first()
+                if fornecedor:
+                    fornecedor_id = fornecedor.id
+                else:
+                    fornecedor = Fornecedor.query.filter(
+                        Fornecedor.ativo == True,
+                        Fornecedor.nome.ilike(f'%{fornecedor_nome}%')
+                    ).first()
+                    if fornecedor:
+                        fornecedor_id = fornecedor.id
+
+        if not fornecedor_id:
+            flash('Fornecedor não encontrado. Digite um nome válido ou selecione um fornecedor sugerido.', 'danger')
+            return render_template('compras/form.html', mps=mps, fornecedores=fornecedores,
+                                   compra=None, titulo='Nova Compra', hoje=date.today().isoformat())
+
         compra = Compra(
             data=data_compra,
-            fornecedor_id=request.form.get('fornecedor_id') or None,
+            fornecedor_id=fornecedor_id,
             materia_prima_id=mp_id,
             quantidade_sacos=qtd_sacos,
             preco_unitario=preco_unit,
