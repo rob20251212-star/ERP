@@ -123,7 +123,8 @@ def saida_produto(quantidade_sacos, motivo='venda',
 
 def atualizar_custo_medio(mp, quantidade_nova, custo_novo_por_saco):
     """Atualiza custo médio ponderado da MP após uma compra"""
-    estoque_atual = mp.estoque_atual - quantidade_nova  # estoque antes da compra
+    # estoque antes da compra (mp.estoque_atual ainda não foi incrementado)
+    estoque_atual = mp.estoque_atual
     if estoque_atual < 0:
         estoque_atual = 0
 

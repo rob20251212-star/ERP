@@ -4,6 +4,7 @@ from extensions import db
 from models.configuracao import Configuracao
 from models.usuario import Usuario
 from werkzeug.security import generate_password_hash
+from services.excel_import_service import import_excel_planilha
 
 configuracoes_bp = Blueprint('configuracoes', __name__)
 
@@ -29,6 +30,28 @@ def salvar():
             db.session.add(Configuracao(chave=chave, valor=valor))
     db.session.commit()
     flash('Configurações salvas!', 'success')
+    return redirect(url_for('configuracoes.index'))
+
+
+@configuracoes_bp.route('/upload-planilha', methods=['POST'])
+@login_required
+def upload_planilha():
+    arquivo = request.files.get('planilha_excel')
+    if not arquivo or arquivo.filename == '':
+        flash('Selecione um arquivo XLS ou XLSX antes de enviar.', 'danger')
+        return redirect(url_for('configuracoes.index'))
+
+    try:
+        resumo = import_excel_planilha(arquivo)
+        mensagem = f"Importação concluída: {resumo['compras']} compras e {resumo['vendas']} vendas importadas."
+        if resumo.get('warnings'):
+            avisos = ' '.join(resumo['warnings'])
+            flash(f"{mensagem} Atenção: {avisos}", 'warning')
+        else:
+            flash(mensagem, 'success')
+    except Exception as err:
+        flash(str(err), 'danger')
+
     return redirect(url_for('configuracoes.index'))
 
 

@@ -1,23 +1,22 @@
-
 {% extends 'base.html' %}
 
-{% block title %}Registrar Compra - DIGO ERP{% endblock %}
+{% block title %}{{ titulo }} - DIGO ERP{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card p-4">
-            <h4 class="font-weight-bold mb-4"><i class="bi bi-cart-check me-2 text-primary"></i>Registrar Nova Compra</h4>
+            <h4 class="font-weight-bold mb-4"><i class="bi bi-cart-check me-2 text-primary"></i>{{ titulo }}</h4>
             
             <form method="POST" id="compraForm">
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="data" class="form-label text-muted small">Data da Compra *</label>
-                        <input type="date" class="form-control" id="data" name="data" value="{{ hoje }}" required>
+                        <input type="date" class="form-control" id="data" name="data" value="{{ compra.data.isoformat() if compra else hoje }}" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="numero_nf" class="form-label text-muted small">Número da Nota Fiscal (NF)</label>
-                        <input type="text" class="form-control" id="numero_nf" name="numero_nf" placeholder="NF-e">
+                        <input type="text" class="form-control" id="numero_nf" name="numero_nf" placeholder="NF-e" value="{{ compra.numero_nf or '' }}">
                     </div>
                 </div>
 
@@ -27,41 +26,41 @@
                         <select class="form-select" id="materia_prima_id" name="materia_prima_id" required>
                             <option value="">Selecione...</option>
                             {% for mp in mps %}
-                            <option value="{{ mp.id }}">{{ mp.nome }} (Estoque atual: {{ mp.estoque_atual|round(2) }})</option>
+                            <option value="{{ mp.id }}" {% if compra and compra.materia_prima_id == mp.id %}selected{% endif %}>{{ mp.nome }} (Estoque atual: {{ mp.estoque_atual|round(2) }})</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="fornecedor_nome" class="form-label text-muted small">Fornecedor *</label>
-                        <input type="text" class="form-control" id="fornecedor_nome" name="fornecedor_nome" placeholder="Digite o nome do fornecedor" required>
+                        <input type="text" class="form-control" id="fornecedor_nome" name="fornecedor_nome" placeholder="Digite o nome do fornecedor" required value="{{ compra.fornecedor.nome if compra and compra.fornecedor else '' }}">
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="quantidade_sacos" class="form-label text-muted small">Quantidade (Sacos / Unidades) *</label>
-                        <input type="number" step="0.01" class="form-control calc-trigger" id="quantidade_sacos" name="quantidade_sacos" required placeholder="0.00">
+                        <input type="number" step="0.01" class="form-control calc-trigger" id="quantidade_sacos" name="quantidade_sacos" required placeholder="0.00" value="{{ compra.quantidade_sacos if compra else '' }}">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="preco_unitario" class="form-label text-muted small">Preço Unitário (R$) *</label>
-                        <input type="number" step="0.0001" class="form-control calc-trigger" id="preco_unitario" name="preco_unitario" required placeholder="0.00">
+                        <input type="number" step="0.0001" class="form-control calc-trigger" id="preco_unitario" name="preco_unitario" required placeholder="0.00" value="{{ compra.preco_unitario if compra else '' }}">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="frete_total" class="form-label text-muted small">Valor do Frete Total (R$)</label>
-                        <input type="number" step="0.01" class="form-control calc-trigger" id="frete_total" name="frete_total" value="0.00">
+                        <input type="number" step="0.01" class="form-control calc-trigger" id="frete_total" name="frete_total" value="{{ compra.frete_total if compra else '0.00' }}">
                     </div>
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="prazo_pagamento" class="form-label text-muted small">Prazo de Pagamento (Dias)</label>
-                        <input type="number" class="form-control" id="prazo_pagamento" name="prazo_pagamento" value="0" placeholder="0 para À Vista">
+                        <input type="number" class="form-control" id="prazo_pagamento" name="prazo_pagamento" value="{{ compra.prazo_pagamento if compra else 0 }}" placeholder="0 para À Vista">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label text-muted small">Total Geral Estimado (Com Frete)</label>
                         <div class="input-group">
                             <span class="input-group-text bg-secondary-subtle">R$</span>
-                            <input type="text" class="form-control font-weight-bold" id="total_geral" readonly disabled value="0.00">
+                            <input type="text" class="form-control font-weight-bold" id="total_geral" readonly disabled value="{{ compra.total_com_frete|round(2) if compra else '0.00' }}">
                         </div>
                     </div>
                 </div>
@@ -70,7 +69,7 @@
 
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('compras.index') }}" class="btn btn-outline-secondary">Cancelar</a>
-                    <button type="submit" class="btn btn-primary">Registrar Compra</button>
+                    <button type="submit" class="btn btn-primary">{{ 'Atualizar Compra' if compra else 'Registrar Compra' }}</button>
                 </div>
             </form>
         </div>

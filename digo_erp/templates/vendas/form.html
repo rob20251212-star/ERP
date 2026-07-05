@@ -1,34 +1,34 @@
 {% extends 'base.html' %}
 
-{% block title %}Registrar Venda - DIGO ERP{% endblock %}
+{% block title %}{{ titulo }} - DIGO ERP{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-9">
         <div class="card p-4">
-            <h4 class="font-weight-bold mb-4"><i class="bi bi-cash-coin me-2 text-primary"></i>Registrar Nova Venda</h4>
+            <h4 class="font-weight-bold mb-4"><i class="bi bi-cash-coin me-2 text-primary"></i>{{ titulo }}</h4>
             
             <form method="POST" id="vendaForm">
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="data" class="form-label text-muted small">Data da Venda *</label>
-                        <input type="date" class="form-control" id="data" name="data" value="{{ hoje }}" required>
+                        <input type="date" class="form-control" id="data" name="data" value="{{ venda.data.isoformat() if venda else hoje }}" required>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="cliente_id" class="form-label text-muted small">Cliente *</label>
                         <select class="form-select" id="cliente_id" name="cliente_id" required>
                             <option value="">Selecione...</option>
                             {% for c in clientes %}
-                            <option value="{{ c.id }}">{{ c.nome }} ({{ c.cidade }})</option>
+                            <option value="{{ c.id }}" {% if venda and venda.cliente_id == c.id %}selected{% endif %}>{{ c.nome }} ({{ c.cidade }})</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="vendedor_id" class="form-label text-muted small">Vendedor / Canal</label>
                         <select class="form-select calc-trigger" id="vendedor_id" name="vendedor_id" data-comm-pct="0">
-                            <option value="" data-comm-pct="0">Venda Direta (Sem comissão)</option>
+                            <option value="" data-comm-pct="0" {% if venda and not venda.vendedor_id %}selected{% endif %}>Venda Direta (Sem comissão)</option>
                             {% for v in vendedores %}
-                            <option value="{{ v.id }}" data-comm-pct="{{ v.comissao_pct }}">{{ v.nome }} ({{ v.comissao_pct }}%)</option>
+                            <option value="{{ v.id }}" data-comm-pct="{{ v.comissao_pct }}" {% if venda and venda.vendedor_id == v.id %}selected{% endif %}>{{ v.nome }} ({{ v.comissao_pct }}%)</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -37,19 +37,19 @@
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label for="quantidade_sacos" class="form-label text-muted small">Qtd (Sacos) *</label>
-                        <input type="number" class="form-control calc-trigger text-center font-weight-bold" id="quantidade_sacos" name="quantidade_sacos" min="1" required placeholder="0">
+                        <input type="number" class="form-control calc-trigger text-center font-weight-bold" id="quantidade_sacos" name="quantidade_sacos" min="1" required placeholder="0" value="{{ venda.quantidade_sacos if venda else '' }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="preco_unitario" class="form-label text-muted small">Preço Unitário (R$) *</label>
-                        <input type="number" step="0.01" class="form-control calc-trigger text-center font-weight-bold" id="preco_unitario" name="preco_unitario" required placeholder="0.00">
+                        <input type="number" step="0.01" class="form-control calc-trigger text-center font-weight-bold" id="preco_unitario" name="preco_unitario" required placeholder="0.00" value="{{ venda.preco_unitario if venda else '' }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="desconto" class="form-label text-muted small">Desconto Total (R$)</label>
-                        <input type="number" step="0.01" class="form-control calc-trigger text-center" id="desconto" name="desconto" value="0.00">
+                        <input type="number" step="0.01" class="form-control calc-trigger text-center" id="desconto" name="desconto" value="{{ venda.desconto if venda else '0.00' }}">
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="frete" class="form-label text-muted small">Valor do Frete (R$)</label>
-                        <input type="number" step="0.01" class="form-control calc-trigger text-center" id="frete" name="frete" value="0.00">
+                        <input type="number" step="0.01" class="form-control calc-trigger text-center" id="frete" name="frete" value="{{ venda.frete if venda else '0.00' }}">
                     </div>
                 </div>
 
@@ -57,21 +57,21 @@
                     <div class="col-md-4 mb-3">
                         <label for="tipo_frete" class="form-label text-muted small">Tipo de Frete *</label>
                         <select class="form-select calc-trigger" id="tipo_frete" name="tipo_frete" required>
-                            <option value="FOB" selected>FOB (Fretado pelo Cliente)</option>
-                            <option value="CIF">CIF (Fretado por Nós - Soma ao Líquido)</option>
+                            <option value="FOB" {% if venda and venda.tipo_frete == 'FOB' %}selected{% endif %}>FOB (Fretado pelo Cliente)</option>
+                            <option value="CIF" {% if venda and venda.tipo_frete == 'CIF' %}selected{% endif %}>CIF (Fretado por Nós - Soma ao Líquido)</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="forma_pagamento" class="form-label text-muted small">Forma de Pagamento *</label>
                         <select class="form-select" id="forma_pagamento" name="forma_pagamento" required>
-                            <option value="A VISTA">À Vista (Dinheiro / PIX)</option>
-                            <option value="CHEQUE">Cheque</option>
-                            <option value="PRAZO">Faturado a Prazo</option>
+                            <option value="A VISTA" {% if venda and venda.forma_pagamento == 'A VISTA' %}selected{% endif %}>À Vista (Dinheiro / PIX)</option>
+                            <option value="CHEQUE" {% if venda and venda.forma_pagamento == 'CHEQUE' %}selected{% endif %}>Cheque</option>
+                            <option value="PRAZO" {% if venda and venda.forma_pagamento == 'PRAZO' %}selected{% endif %}>Faturado a Prazo</option>
                         </select>
                     </div>
                     <div class="col-md-4 mb-3" id="prazo_group">
                         <label for="prazo_dias" class="form-label text-muted small">Prazo de Vencimento (Dias) *</label>
-                        <input type="number" class="form-control" id="prazo_dias" name="prazo_dias" value="0" min="0">
+                        <input type="number" class="form-control" id="prazo_dias" name="prazo_dias" value="{{ venda.prazo_dias if venda else 0 }}" min="0">
                     </div>
                 </div>
 
@@ -100,12 +100,12 @@
 
                 <div class="mb-4">
                     <label for="observacoes" class="form-label text-muted small">Observações da Venda</label>
-                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3" placeholder="Ex: Deixar na obra da Construmix..."></textarea>
+                    <textarea class="form-control" id="observacoes" name="observacoes" rows="3" placeholder="Ex: Deixar na obra da Construmix...">{{ venda.observacoes if venda else '' }}</textarea>
                 </div>
 
                 <div class="d-flex justify-content-between">
                     <a href="{{ url_for('vendas.index') }}" class="btn btn-outline-secondary">Cancelar</a>
-                    <button type="submit" class="btn btn-success"><i class="bi bi-cart-check me-2"></i>Salvar Venda</button>
+                    <button type="submit" class="btn btn-success"><i class="bi bi-cart-check me-2"></i>{{ 'Atualizar Venda' if venda else 'Salvar Venda' }}</button>
                 </div>
             </form>
         </div>
@@ -117,13 +117,14 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     let custoUnitario = 0;
+    const isEdit = {{ 'true' if venda else 'false' }};
     
     // Fetch product pricing parameters from the backend
     fetch("{{ url_for('vendas.api_preco_custo') }}")
         .then(res => res.json())
         .then(data => {
             custoUnitario = data.custo || 0;
-            if (data.preco_padrao) {
+            if (!isEdit && data.preco_padrao) {
                 document.getElementById("preco_unitario").value = data.preco_padrao.toFixed(2);
             }
         });

@@ -16,12 +16,18 @@
     <div class="col-12">
         <div class="card bg-danger-subtle border-danger text-danger p-3">
             <h5 class="alert-heading font-weight-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Atenção: Existem alertas ativos!</h5>
-            <ul class="mb-0">
+            <ul class="mb-0" id="dashboard-alert-list">
                 {% for a in alertas_estoque %}
-                <li><strong>Estoque Baixo:</strong> {{ a.nome }} está com saldo de {{ a.atual }} {{ a.unidade }} (Mínimo: {{ a.minimo }}).</li>
+                <li class="d-flex justify-content-between align-items-start gap-2 mb-2" data-alert-item data-alert-key="estoque-{{ loop.index }}-{{ a.nome }}">
+                    <span><strong>Estoque Baixo:</strong> {{ a.nome }} está com saldo de {{ a.atual }} {{ a.unidade }} (Mínimo: {{ a.minimo }}).</span>
+                    <button type="button" class="btn btn-link btn-sm p-0 text-danger" data-dismiss-alert aria-label="Fechar alerta">×</button>
+                </li>
                 {% endfor %}
                 {% for c in alertas_contas %}
-                <li><strong>Conta Vencida:</strong> "{{ c.descricao }}" de R$ {{ c.valor|round(2) }} venceu em {{ c.vencimento.strftime('%d/%m/%Y') }} ({{ c.dias_atraso }} dias de atraso).</li>
+                <li class="d-flex justify-content-between align-items-start gap-2 mb-2" data-alert-item data-alert-key="conta-{{ loop.index }}-{{ c.descricao }}">
+                    <span><strong>Conta Vencida:</strong> "{{ c.descricao }}" de R$ {{ c.valor|round(2) }} venceu em {{ c.vencimento.strftime('%d/%m/%Y') }} ({{ c.dias_atraso }} dias de atraso).</span>
+                    <button type="button" class="btn btn-link btn-sm p-0 text-danger" data-dismiss-alert aria-label="Fechar alerta">×</button>
+                </li>
                 {% endfor %}
             </ul>
         </div>
@@ -230,4 +236,53 @@
     const producaoMensal = {{ producao_por_mes|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const storageKey = 'digo-dashboard-alerts-dismissed';
+        const alertList = document.getElementById('dashboard-alert-list');
+        const alertCard = alertList ? alertList.closest('.card') : null;
+
+        if (!alertList || !alertCard) {
+            return;
+        }
+
+        const dismissed = new Set(JSON.parse(localStorage.getItem(storageKey) || '[]'));
+        const alertItems = Array.from(alertList.querySelectorAll('[data-alert-item]'));
+
+        alertItems.forEach((item) => {
+            const key = item.dataset.alertKey;
+            if (dismissed.has(key)) {
+                item.remove();
+            }
+        });
+
+        const remainingItems = Array.from(alertList.querySelectorAll('[data-alert-item]'));
+        if (remainingItems.length === 0) {
+            alertCard.remove();
+            return;
+        }
+
+        alertList.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-dismiss-alert]');
+            if (!button) {
+                return;
+            }
+
+            const item = button.closest('[data-alert-item]');
+            if (!item) {
+                return;
+            }
+
+            const key = item.dataset.alertKey;
+            dismissed.add(key);
+            localStorage.setItem(storageKey, JSON.stringify(Array.from(dismissed)));
+            item.remove();
+
+            const remainingAfterDismiss = Array.from(alertList.querySelectorAll('[data-alert-item]'));
+            if (remainingAfterDismiss.length === 0) {
+                alertCard.remove();
+            }
+        });
+    });
+</script>
 {% endblock %}

@@ -5,9 +5,9 @@ from models.venda import Venda, ContaReceber
 from models.cliente import Cliente
 from models.vendedor import Vendedor
 from models.produto import ProdutoFinal
-from services.estoque_service import saida_produto
+from services.estoque_service import saida_produto, entrada_produto
 from services.financeiro_service import gerar_conta_receber, lancar_receita
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 vendas_bp = Blueprint('vendas', __name__)
 
@@ -134,6 +134,115 @@ def nova():
 
     return render_template('vendas/form.html', clientes=clientes, vendedores=vendedores,
                            produto=produto, titulo='Nova Venda', hoje=date.today().isoformat())
+
+
+@vendas_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar(id):
+    venda = Venda.query.get_or_404(id)
+    clientes = Cliente.query.filter_by(ativo=True).order_by(Cliente.nome).all()
+    vendedores = Vendedor.query.filter_by(ativo=True).order_by(Vendedor.nome).all()
+    produto = ProdutoFinal.query.first()
+
+    if request.method == 'POST':
+        cliente_id = int(request.form['cliente_id'])
+        vendedor_id = request.form.get('vendedor_id') or None
+        qtd = int(request.form['quantidade_sacos'])
+        preco_unit = float(request.form['preco_unitario'])
+        desconto = float(request.form.get('desconto', 0) or 0)
+        frete = float(request.form.get('frete', 0) or 0)
+        tipo_frete = request.form.get('tipo_frete', 'FOB')
+        forma_pagamento = request.form.get('forma_pagamento', 'A VISTA')
+        prazo_dias = int(request.form.get('prazo_dias', 0) or 0)
+        data_venda = datetime.strptime(request.form['data'], '%Y-%m-%d').date()
+
+        if produto and produto.estoque_atual + venda.quantidade_sacos < qtd:
+            flash(f'Estoque insuficiente! Disponível: {produto.estoque_atual + venda.quantidade_sacos:.0f} sacos', 'danger')
+            return render_template('vendas/form.html', clientes=clientes, vendedores=vendedores,
+                                   produto=produto, venda=venda, titulo='Editar Venda', hoje=date.today().isoformat())
+
+        valor_bruto = round(qtd * preco_unit, 2)
+        valor_liquido = round(valor_bruto - desconto + (frete if tipo_frete == 'CIF' else 0), 2)
+        custo_total = round((produto.custo_calculado if produto else 0) * qtd, 2)
+        lucro = round(valor_liquido - custo_total, 2)
+        margem = round((lucro / valor_liquido * 100) if valor_liquido else 0, 2)
+
+        comissao = 0.0
+        if vendedor_id:
+            vendedor = Vendedor.query.get(int(vendedor_id))
+            if vendedor and vendedor.comissao_pct:
+                comissao = round(valor_liquido * vendedor.comissao_pct / 100, 2)
+
+        estoque_diff = qtd - venda.quantidade_sacos
+        if estoque_diff > 0:
+            saida_produto(estoque_diff, motivo='venda_ajuste', referencia_id=venda.id,
+                          referencia_tipo='venda', usuario_id=current_user.id,
+                          obs=f'Ajuste de venda #{venda.id}')
+        elif estoque_diff < 0:
+            entrada_produto(abs(estoque_diff), motivo='venda_ajuste', referencia_id=venda.id,
+                           referencia_tipo='venda', usuario_id=current_user.id,
+                           obs=f'Ajuste de venda #{venda.id}')
+
+        venda.data = data_venda
+        venda.cliente_id = cliente_id
+        venda.vendedor_id = int(vendedor_id) if vendedor_id else None
+        venda.quantidade_sacos = qtd
+        venda.preco_unitario = preco_unit
+        venda.desconto = desconto
+        venda.frete = frete
+        venda.tipo_frete = tipo_frete
+        venda.forma_pagamento = forma_pagamento
+        venda.prazo_dias = prazo_dias
+        venda.valor_bruto = valor_bruto
+        venda.valor_liquido = valor_liquido
+        venda.custo_total = custo_total
+        venda.lucro = lucro
+        venda.margem = margem
+        venda.comissao = comissao
+        venda.status_pagamento = 'pago' if prazo_dias == 0 else 'pendente'
+        venda.valor_pago = valor_liquido if prazo_dias == 0 else 0.0
+        venda.observacoes = request.form.get('observacoes', '').strip()
+
+        if venda.conta_receber:
+            conta = venda.conta_receber
+            conta.valor = valor_liquido
+            conta.descricao = f'Venda {qtd} sacos - {forma_pagamento}'
+            conta.vencimento = data_venda + timedelta(days=prazo_dias)
+            conta.status = 'pago' if prazo_dias == 0 else 'pendente'
+            conta.data_pagamento = data_venda if prazo_dias == 0 else None
+            conta.valor_pago = valor_liquido if prazo_dias == 0 else 0.0
+        else:
+            gerar_conta_receber(
+                venda_id=venda.id,
+                cliente_id=cliente_id,
+                valor=valor_liquido,
+                prazo_dias=prazo_dias,
+                descricao=f'Venda {qtd} sacos - {forma_pagamento}',
+                data_base=data_venda
+            )
+
+        db.session.commit()
+        flash(f'Venda atualizada com sucesso!', 'success')
+        return redirect(url_for('vendas.index'))
+
+    return render_template('vendas/form.html', clientes=clientes, vendedores=vendedores,
+                           produto=produto, venda=venda, titulo='Editar Venda', hoje=venda.data.isoformat())
+
+
+@vendas_bp.route('/<int:id>/excluir', methods=['POST'])
+@login_required
+def excluir(id):
+    venda = Venda.query.get_or_404(id)
+    if venda.conta_receber:
+        db.session.delete(venda.conta_receber)
+    if venda.quantidade_sacos:
+        entrada_produto(venda.quantidade_sacos, motivo='venda_cancelada', referencia_id=venda.id,
+                       referencia_tipo='venda', usuario_id=current_user.id,
+                       obs=f'Venda cancelada #{venda.id}')
+    db.session.delete(venda)
+    db.session.commit()
+    flash('Venda excluída com sucesso.', 'warning')
+    return redirect(url_for('vendas.index'))
 
 
 @vendas_bp.route('/<int:id>/detalhe')

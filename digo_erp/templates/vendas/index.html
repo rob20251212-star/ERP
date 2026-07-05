@@ -70,6 +70,10 @@
                     </td>
                     <td>
                         <a href="{{ url_for('vendas.detalhe', id=v.id) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye-fill"></i></a>
+                        <a href="{{ url_for('vendas.editar', id=v.id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil-fill"></i></a>
+                        <form action="{{ url_for('vendas.excluir', id=v.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deseja realmente excluir esta venda?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash-fill"></i></button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}

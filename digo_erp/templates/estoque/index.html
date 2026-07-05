@@ -42,6 +42,10 @@
                 <span class="text-muted small text-uppercase d-block mb-1">Saldo em Estoque</span>
                 <h1 class="font-weight-bold text-indigo display-5">{{ produto.estoque_atual|round(0) if produto else 0 }}</h1>
                 <span class="text-muted">sacos de 25 kg</span>
+                <div class="mt-2 text-muted small">
+                    <span>Equivalente em estoque:</span>
+                    <div class="fw-bold text-indigo">{{ ((produto.estoque_atual if produto else 0) * (produto.peso_kg if produto else 25))|round(2) }} kg</div>
+                </div>
                 
                 <div class="border-top mt-4 pt-3 text-start small">
                     <div class="d-flex justify-content-between mb-2">
@@ -68,6 +72,7 @@
                             <th>Insumo</th>
                             <th>Categoria</th>
                             <th>Saldo Atual</th>
+                            <th>Kg em Estoque</th>
                             <th>Mínimo</th>
                             <th>Valor em Estoque</th>
                             <th>Status</th>
@@ -79,6 +84,7 @@
                             <td><strong>{{ mp.nome }}</strong></td>
                             <td><span class="badge bg-secondary-subtle text-secondary">{{ mp.tipo|capitalize }}</span></td>
                             <td class="font-weight-bold">{{ mp.estoque_atual|round(2) }} {% if mp.tipo in ('embalagem', 'adesivo') %}un{% else %}sacos{% endif %}</td>
+                            <td class="text-muted">{% if mp.tipo not in ('embalagem', 'adesivo') %}{{ (mp.estoque_atual * mp.peso_saco_kg)|round(2) }} kg{% else %}—{% endif %}</td>
                             <td>{{ mp.estoque_minimo }}</td>
                             <td>R$ {{ mp.valor_em_estoque|round(2) }}</td>
                             <td>

@@ -9,7 +9,11 @@
         <p class="text-muted">Detalhamento comercial, financeiro e comissões da venda.</p>
     </div>
     <div class="col-sm-6 text-sm-end">
-        <a href="{{ url_for('vendas.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-2"></i>Voltar</a>
+        <a href="{{ url_for('vendas.index') }}" class="btn btn-outline-secondary me-2"><i class="bi bi-arrow-left me-2"></i>Voltar</a>
+        <a href="{{ url_for('vendas.editar', id=venda.id) }}" class="btn btn-primary me-2"><i class="bi bi-pencil-fill me-2"></i>Editar</a>
+        <form action="{{ url_for('vendas.excluir', id=venda.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Deseja realmente excluir esta venda?');">
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash-fill me-2"></i>Excluir</button>
+        </form>
     </div>
 </div>
 

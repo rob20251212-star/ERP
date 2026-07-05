@@ -42,11 +42,6 @@ def index():
     # Alertas de vencimento
     alertas = get_contas_vencidas()
 
-    # Saldo por dia para gráfico
-    dias_saldo = []
-    for lanc in sorted(lancamentos, key=lambda x: x.data):
-        pass
-
     return render_template('financeiro/index.html',
                            lancamentos=lancamentos,
                            resumo=resumo,
