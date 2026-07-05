@@ -1,12 +1,35 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+
+import os
+import threading
+import uuid
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required
 from extensions import db
 from models.configuracao import Configuracao
 from models.usuario import Usuario
 from werkzeug.security import generate_password_hash
+from werkzeug.utils import secure_filename
 from services.excel_import_service import import_excel_planilha
 
 configuracoes_bp = Blueprint('configuracoes', __name__)
+
+
+def _processar_upload_planilha(app, caminho_arquivo, nome_arquivo):
+    with app.app_context():
+        try:
+            resumo = import_excel_planilha(caminho_arquivo)
+            app.logger.info(
+                'Importação de planilha concluída para %s: vendas=%s compras=%s',
+                nome_arquivo,
+                resumo.get('vendas', 0),
+                resumo.get('compras', 0),
+            )
+        except Exception as exc:
+            app.logger.exception('Falha ao importar planilha %s: %s', nome_arquivo, exc)
+        finally:
+            if os.path.exists(caminho_arquivo):
+                os.remove(caminho_arquivo)
 
 
 @configuracoes_bp.route('/')
@@ -41,17 +64,21 @@ def upload_planilha():
         flash('Selecione um arquivo XLS ou XLSX antes de enviar.', 'danger')
         return redirect(url_for('configuracoes.index'))
 
-    try:
-        resumo = import_excel_planilha(arquivo)
-        mensagem = f"Importação concluída: {resumo['compras']} compras e {resumo['vendas']} vendas importadas."
-        if resumo.get('warnings'):
-            avisos = ' '.join(resumo['warnings'])
-            flash(f"{mensagem} Atenção: {avisos}", 'warning')
-        else:
-            flash(mensagem, 'success')
-    except Exception as err:
-        flash(str(err), 'danger')
+    nome_arquivo = secure_filename(arquivo.filename)
+    pasta_upload = os.path.join(current_app.root_path, 'instance', 'uploads')
+    os.makedirs(pasta_upload, exist_ok=True)
 
+    caminho_arquivo = os.path.join(pasta_upload, f"{uuid.uuid4().hex}_{nome_arquivo}")
+    arquivo.save(caminho_arquivo)
+
+    thread = threading.Thread(
+        target=_processar_upload_planilha,
+        args=(current_app._get_current_object(), caminho_arquivo, nome_arquivo),
+        daemon=True,
+    )
+    thread.start()
+
+    flash('Arquivo recebido. A importação foi iniciada em segundo plano e pode levar alguns minutos.', 'info')
     return redirect(url_for('configuracoes.index'))
 
 
