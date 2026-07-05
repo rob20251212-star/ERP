@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block title %}{{ titulo }} - DIGO ERP{% endblock %}
@@ -26,7 +27,12 @@
                         <select class="form-select" id="materia_prima_id" name="materia_prima_id" required>
                             <option value="">Selecione...</option>
                             {% for mp in mps %}
-                            <option value="{{ mp.id }}" {% if compra and compra.materia_prima_id == mp.id %}selected{% endif %}>{{ mp.nome }} (Estoque atual: {{ mp.estoque_atual|round(2) }})</option>
+                            <option value="{{ mp.id }}"
+                                    data-preco-saco="{{ mp.preco_saco|round(2) }}"
+                                    data-frete-saco="{{ mp.frete_saco|round(2) }}"
+                                    {% if compra and compra.materia_prima_id == mp.id %}selected{% endif %}>
+                                {{ mp.nome }} (Estoque atual: {{ mp.estoque_atual|round(2) }})
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -80,6 +86,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    const selectMp = document.getElementById("materia_prima_id");
     const qtyInput = document.getElementById("quantidade_sacos");
     const priceInput = document.getElementById("preco_unitario");
     const freightInput = document.getElementById("frete_total");
@@ -95,9 +102,31 @@ document.addEventListener("DOMContentLoaded", function() {
         totalInput.value = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
+    function preencherValoresPadrao() {
+        const selectedOption = selectMp.options[selectMp.selectedIndex];
+        if (!selectedOption || !selectedOption.value) {
+            priceInput.value = '';
+            freightInput.value = '';
+            calculateTotal();
+            return;
+        }
+
+        const precoPadrao = selectedOption.getAttribute('data-preco-saco') || '0';
+        const fretePadrao = selectedOption.getAttribute('data-frete-saco') || '0';
+
+        priceInput.value = precoPadrao;
+        freightInput.value = fretePadrao;
+        calculateTotal();
+    }
+
+    selectMp.addEventListener('change', preencherValoresPadrao);
     document.querySelectorAll(".calc-trigger").forEach(input => {
         input.addEventListener("input", calculateTotal);
     });
+
+    if (selectMp.value) {
+        preencherValoresPadrao();
+    }
 });
 </script>
 {% endblock %}
