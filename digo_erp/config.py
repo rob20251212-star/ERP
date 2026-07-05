@@ -1,3 +1,4 @@
+
 import os
 from datetime import timedelta
 
@@ -25,6 +26,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = get_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))
 
     # Backup automático
     BACKUP_DIR = os.path.join(BASE_DIR, 'instance', 'backups')
