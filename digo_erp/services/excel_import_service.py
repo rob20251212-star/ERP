@@ -1,4 +1,6 @@
+
 import io
+import os
 import pandas as pd
 from datetime import datetime, date
 from flask import current_app
@@ -577,20 +579,31 @@ def parse_purchases_sheet_custom(rows, summary, warnings):
     return imported
 
 
-def import_excel_planilha(file_storage):
-    if not file_storage or not file_storage.filename:
+def import_excel_planilha(file_storage_or_path):
+    if not file_storage_or_path:
         raise ValueError('Nenhum arquivo selecionado.')
 
-    filename = secure_filename(file_storage.filename)
-    if not allowed_file(filename):
-        raise ValueError('Somente arquivos .xls ou .xlsx são aceitos.')
-
-    file_storage.stream.seek(0)
-    content = file_storage.read()
-    if not content:
-        raise ValueError('O arquivo está vazio.')
-
-    excel = pd.ExcelFile(io.BytesIO(content))
+    if hasattr(file_storage_or_path, 'filename'):
+        filename = secure_filename(file_storage_or_path.filename)
+        if not allowed_file(filename):
+            raise ValueError('Somente arquivos .xls ou .xlsx são aceitos.')
+        file_storage_or_path.stream.seek(0)
+        content = file_storage_or_path.read()
+        if not content:
+            raise ValueError('O arquivo está vazio.')
+        excel = pd.ExcelFile(io.BytesIO(content))
+    elif isinstance(file_storage_or_path, (str, os.PathLike)):
+        path = os.fspath(file_storage_or_path)
+        filename = secure_filename(os.path.basename(path))
+        if not allowed_file(filename):
+            raise ValueError('Somente arquivos .xls ou .xlsx são aceitos.')
+        if not os.path.exists(path) or os.path.getsize(path) <= 0:
+            raise ValueError('O arquivo está vazio.')
+        with open(path, 'rb') as handle:
+            content = handle.read()
+        excel = pd.ExcelFile(io.BytesIO(content))
+    else:
+        raise ValueError('Formato de arquivo inválido.')
     summary = {
         'vendas': 0,
         'compras': 0,
