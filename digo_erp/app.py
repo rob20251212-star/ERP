@@ -3,9 +3,21 @@ from config import Config
 from extensions import db, login_manager
 import os
 
+
+def format_decimal(value, *args, **kwargs):
+    if value is None:
+        return '0.00'
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return value
+    return f"{number:.2f}"
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.jinja_env.filters['round'] = format_decimal
 
     # Criar pasta instance se não existir
     os.makedirs(os.path.join(app.root_path, 'instance'), exist_ok=True)
