@@ -52,6 +52,9 @@
             border-color: var(--accent-color);
             box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
         }
+        .form-control::placeholder{
+            color:white;
+        }
         .btn-primary {
             background-color: var(--accent-color);
             border: none;
@@ -87,7 +90,7 @@
                 <label for="email" class="form-label text-muted small">E-mail</label>
                 <div class="input-group">
                     <span class="input-group-text bg-dark border-secondary text-light"><i class="bi bi-envelope"></i></span>
-                    <input type="email" class="form-control" id="email" name="email" required placeholder="exemplo@digo.com" style="color:white;">
+                    <input type="email" class="form-control" id="email" name="email" required placeholder="exemplo@digo.com">
                 </div>
             </div>
             <div class="mb-4">
