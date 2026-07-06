@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 
 {% block title %}{{ titulo }} - DIGO ERP{% endblock %}
@@ -27,12 +26,7 @@
                         <select class="form-select" id="materia_prima_id" name="materia_prima_id" required>
                             <option value="">Selecione...</option>
                             {% for mp in mps %}
-                            <option value="{{ mp.id }}"
-                                    data-preco-saco="{{ mp.preco_saco|round(2) }}"
-                                    data-frete-saco="{{ mp.frete_saco|round(2) }}"
-                                    {% if compra and compra.materia_prima_id == mp.id %}selected{% endif %}>
-                                {{ mp.nome }} (Estoque atual: {{ mp.estoque_atual|round(2) }})
-                            </option>
+                            <option value="{{ mp.id }}" data-preco="{{ mp.preco_saco }}" data-frete="{{ mp.frete_saco }}" {% if compra and compra.materia_prima_id == mp.id %}selected{% endif %}>{{ mp.nome }} (Estoque atual: {{ mp.estoque_atual|round(2) }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -49,11 +43,11 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="preco_unitario" class="form-label text-muted small">Preço Unitário (R$) *</label>
-                        <input type="number" step="0.0001" class="form-control calc-trigger" id="preco_unitario" name="preco_unitario" required placeholder="0.00" value="{{ compra.preco_unitario if compra else '' }}">
+                        <input type="number" step="0.01" class="form-control calc-trigger" id="preco_unitario" name="preco_unitario" required placeholder="0.00" value="{{ '%.2f'|format(compra.preco_unitario) if compra else '' }}">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="frete_total" class="form-label text-muted small">Valor do Frete Total (R$)</label>
-                        <input type="number" step="0.01" class="form-control calc-trigger" id="frete_total" name="frete_total" value="{{ compra.frete_total if compra else '0.00' }}">
+                        <input type="number" step="0.01" class="form-control calc-trigger" id="frete_total" name="frete_total" value="{{ '%.2f'|format(compra.frete_total) if compra else '0.00' }}">
                     </div>
                 </div>
 
@@ -86,7 +80,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const selectMp = document.getElementById("materia_prima_id");
+    const mpSelect = document.getElementById("materia_prima_id");
     const qtyInput = document.getElementById("quantidade_sacos");
     const priceInput = document.getElementById("preco_unitario");
     const freightInput = document.getElementById("frete_total");
@@ -102,30 +96,44 @@ document.addEventListener("DOMContentLoaded", function() {
         totalInput.value = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function preencherValoresPadrao() {
-        const selectedOption = selectMp.options[selectMp.selectedIndex];
+    function parseNumber(value) {
+        const cleaned = String(value).replace(',', '.');
+        return parseFloat(cleaned) || 0;
+    }
+
+    function updateFromMateriaPrima() {
+        const selectedOption = mpSelect.selectedOptions[0];
         if (!selectedOption || !selectedOption.value) {
-            priceInput.value = '';
-            freightInput.value = '';
-            calculateTotal();
             return;
         }
 
-        const precoPadrao = selectedOption.getAttribute('data-preco-saco') || '0';
-        const fretePadrao = selectedOption.getAttribute('data-frete-saco') || '0';
+        const preco = parseNumber(selectedOption.dataset.preco);
+        const freteSaco = parseNumber(selectedOption.dataset.frete);
+        const qty = parseNumber(qtyInput.value);
 
-        priceInput.value = precoPadrao;
-        freightInput.value = fretePadrao;
+        priceInput.value = preco.toFixed(2);
+        freightInput.value = qty ? (freteSaco * qty).toFixed(2) : freteSaco.toFixed(2);
         calculateTotal();
     }
 
-    selectMp.addEventListener('change', preencherValoresPadrao);
+    mpSelect.addEventListener("change", updateFromMateriaPrima);
+    
+    qtyInput.addEventListener("input", function() {
+        const selectedOption = mpSelect.selectedOptions[0];
+        if (selectedOption && selectedOption.value) {
+            const freteSaco = parseNumber(selectedOption.dataset.frete);
+            const qty = parseNumber(qtyInput.value);
+            freightInput.value = qty ? (freteSaco * qty).toFixed(2) : freteSaco.toFixed(2);
+            calculateTotal();
+        }
+    });
+
     document.querySelectorAll(".calc-trigger").forEach(input => {
         input.addEventListener("input", calculateTotal);
     });
 
-    if (selectMp.value) {
-        preencherValoresPadrao();
+    if (mpSelect.value) {
+        updateFromMateriaPrima();
     }
 });
 </script>
