@@ -92,9 +92,8 @@ def nova():
         custo_novo_saco = preco_unit + frete_saco
         atualizar_custo_medio(mp, qtd_sacos, custo_novo_saco)
 
-        # 2. Atualizar preço e frete no cadastro da MP (atualiza custo futuro)
-        mp.preco_saco = preco_unit
-        mp.frete_saco = frete_saco
+        # 2. Não sobrescrever o frete da matéria-prima no cadastro mestre
+        #    O frete deve ser mantido no registro de compra, não no valor exibido em Matérias-Primas.
 
         # 3. Entrada no estoque
         entrada_mp(mp_id, qtd_sacos, motivo='compra',
@@ -207,8 +206,6 @@ def editar(id):
 
         mp = MateriaPrima.query.get(mp_id)
         if mp:
-            mp.preco_saco = preco_unit
-            mp.frete_saco = frete_saco
             if atualizar_custo > 0:
                 atualizar_custo_medio(mp, atualizar_custo, preco_unit + frete_saco)
 
